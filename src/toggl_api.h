@@ -45,7 +45,7 @@ extern "C" {
 
 // Experimental features
 
-#define kExperimentalFeatureRenderTimeline false
+#define kExperimentalFeatureRenderTimeline true
 
 // Models
 
