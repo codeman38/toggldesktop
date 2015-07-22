@@ -2878,7 +2878,7 @@ void Context::timelineEvents(
             ++i) {
         TimelineEvent *event = *i;
         poco_check_ptr(event);
-        if (event->VisibleToUser()) {
+        if (!event->DeletedAt()) {
             result->push_back(event);
         }
     }
