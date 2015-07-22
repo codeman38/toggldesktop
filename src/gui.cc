@@ -305,9 +305,8 @@ void GUI::DisplayTimeEntryList(const bool open,
             item = time_entry_view_item_init(timeline_event,
                                              date_duration,
                                              false);
-        } else {
-            poco_assert(false);
         }
+        poco_assert(item->ViewType);
         item->Next = first;
         if (first && compare_string(item->DateHeader, first->DateHeader) != 0) {
             first->IsHeader = true;

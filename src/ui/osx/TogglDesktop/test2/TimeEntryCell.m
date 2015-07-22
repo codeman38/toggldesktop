@@ -134,6 +134,23 @@ extern void *ctx;
 
 	[self setFocused];
 
+	if (self.isTimeline)
+	{
+		NSAlert *alert = [[NSAlert alloc] init];
+		[alert addButtonWithTitle:@"OK"];
+		[alert addButtonWithTitle:@"Cancel"];
+		[alert setMessageText:@"Save as time entry?"];
+		[alert setAlertStyle:NSInformationalAlertStyle];
+		NSInteger result = [alert runModal];
+
+		if (NSAlertFirstButtonReturn == result)
+		{
+			toggl_timeline_save_as_time_entry(ctx, [self.GUID UTF8String]);
+		}
+
+		return;
+	}
+
 	if (NSPointInRect(mouseLocation, self.projectTextField.frame))
 	{
 		toggl_edit(ctx, [self.GUID UTF8String], false, kFocusedFieldNameProject);
