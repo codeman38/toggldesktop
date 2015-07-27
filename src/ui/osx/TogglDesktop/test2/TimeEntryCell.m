@@ -28,7 +28,6 @@ extern void *ctx;
 	NSAssert([NSThread isMainThread], @"Rendering stuff should happen on main thread");
 
 	self.GUID = view_item.GUID;
-	self.isTimeline = kTimedEventTypeTimelineEvent == view_item.ViewType;
 	self.durationTextField.stringValue = view_item.duration;
 	if (NO == view_item.durOnly)
 	{
@@ -133,23 +132,6 @@ extern void *ctx;
 	NSPoint mouseLocation = [ self convertPoint:windowLocation fromView:nil ];
 
 	[self setFocused];
-
-	if (self.isTimeline)
-	{
-		NSAlert *alert = [[NSAlert alloc] init];
-		[alert addButtonWithTitle:@"OK"];
-		[alert addButtonWithTitle:@"Cancel"];
-		[alert setMessageText:@"Save as time entry?"];
-		[alert setAlertStyle:NSInformationalAlertStyle];
-		NSInteger result = [alert runModal];
-
-		if (NSAlertFirstButtonReturn == result)
-		{
-			toggl_timeline_save_as_time_entry(ctx, [self.GUID UTF8String]);
-		}
-
-		return;
-	}
 
 	if (NSPointInRect(mouseLocation, self.projectTextField.frame))
 	{

@@ -259,66 +259,6 @@ TogglTimeEntryView *time_entry_view_item_init(
         view_item->Error = nullptr;
     }
 
-    view_item->ViewType = te->Type();
-
-    view_item->Next = nullptr;
-
-    return view_item;
-}
-
-TogglTimeEntryView *time_entry_view_item_init(
-    const toggl::TimelineEvent *te,
-    const std::string date_duration,
-    const bool time_in_timer_format) {
-
-    poco_check_ptr(te);
-
-    TogglTimeEntryView *view_item = new TogglTimeEntryView();
-    poco_check_ptr(view_item);
-
-    view_item->DurationInSeconds = static_cast<int>(te->Duration());
-    view_item->Description = copy_string(te->Title());
-    view_item->GUID = copy_string(te->GUID());
-    if (time_in_timer_format) {
-        view_item->Duration =
-            toggl_format_tracking_time_duration(te->Duration());
-    } else {
-        view_item->Duration = copy_string(toggl::Formatter::FormatDuration(
-            te->Duration(), toggl::Formatter::DurationFormat));
-    }
-    view_item->Started = static_cast<unsigned int>(te->Start());
-    view_item->Ended = static_cast<unsigned int>(te->EndTime());
-
-    std::string start_time_string =
-        toggl::Formatter::FormatTimeForTimeEntryEditor(te->Start());
-    std::string end_time_string =
-        toggl::Formatter::FormatTimeForTimeEntryEditor(te->EndTime());
-
-    view_item->StartTimeString = copy_string(start_time_string);
-    view_item->EndTimeString = copy_string(end_time_string);
-
-    view_item->DateDuration = copy_string(date_duration);
-
-    view_item->Billable = false;
-    view_item->Tags = nullptr;
-    view_item->UpdatedAt = static_cast<unsigned int>(te->UpdatedAt());
-    view_item->DateHeader =
-        copy_string(toggl::Formatter::FormatDateHeader(te->Start()));
-    view_item->DurOnly = false;
-    view_item->IsHeader = false;
-
-    view_item->CanAddProjects = false;
-    view_item->CanSeeBillable = false;
-    view_item->DefaultWID = 0;
-
-    if (te->ValidationError() != toggl::noError) {
-        view_item->Error = copy_string(te->ValidationError());
-    } else {
-        view_item->Error = nullptr;
-    }
-
-    view_item->ViewType = te->Type();
-
     view_item->Next = nullptr;
 
     return view_item;
@@ -386,6 +326,47 @@ void time_entry_view_item_clear(
     delete item;
 }
 
+TogglTimelineView *timeline_view_item_init(
+    const toggl::TimelineEvent *te) {
+
+    poco_check_ptr(te);
+
+    TogglTimelineView *view_item = new TogglTimelineView();
+    poco_check_ptr(view_item);
+
+    view_item->Filename = copy_string(te->Filename());
+    view_item->Title = copy_string(te->Title());
+    view_item->GUID = copy_string(te->GUID());
+
+    view_item->Next = nullptr;
+
+    return view_item;
+}
+
+void timeline_view_item_clear(
+    TogglTimelineView *item) {
+    if (!item) {
+        return;
+    }
+    free(item->Title);
+    item->Title = nullptr;
+
+    free(item->Filename);
+    item->Filename = nullptr;
+
+    free(item->GUID);
+    item->GUID = nullptr;
+
+    if (item->Next) {
+        TogglTimelineView *next =
+            reinterpret_cast<TogglTimelineView *>(item->Next);
+        timeline_view_item_clear(next);
+        item->Next = nullptr;
+    }
+
+    delete item;
+}
+
 TogglSettingsView *settings_view_item_init(
     const bool_t record_timeline,
     const toggl::Settings settings,
@@ -408,7 +389,6 @@ TogglSettingsView *settings_view_item_init(
     view->AutodetectProxy = settings.autodetect_proxy;
     view->Autotrack = settings.autotrack;
     view->OpenEditorOnShortcut = settings.open_editor_on_shortcut;
-    view->RenderTimeline = settings.render_timeline;
 
     view->UseProxy = use_proxy;
 

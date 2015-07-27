@@ -303,6 +303,7 @@ void Context::updateUI(std::vector<ModelChange> *changes) {
     bool open_time_entry_list(false);
     bool display_autotracker_rules(false);
     bool display_settings(false);
+    bool display_timeline(false);
 
     // Check what needs to be updated in UI
     for (std::vector<ModelChange>::const_iterator it =
@@ -360,7 +361,7 @@ void Context::updateUI(std::vector<ModelChange> *changes) {
             if (kExperimentalFeatureRenderTimeline) {
                 Poco::Mutex::ScopedLock lock(user_m_);
                 if (user_ && user_->RecordTimeline()) {
-                    display_time_entries = true;
+                    display_timeline = true;
                 }
             }
         }
@@ -409,6 +410,9 @@ void Context::updateUI(std::vector<ModelChange> *changes) {
     }
     if (display_autotracker_rules) {
         displayAutotrackerRules();
+    }
+    if (display_timeline) {
+        DisplayTimeline();
     }
     if (display_settings) {
         error err = DisplaySettings();
@@ -1322,22 +1326,6 @@ error Context::SetSettingsAutodetectProxy(const bool autodetect_proxy) {
     return noError;
 }
 
-error Context::SetSettingsRenderTimeline(const bool &value) {
-    error err = db()->SetSettingsRenderTimeline(value);
-    if (err != noError) {
-        return displayError(err);
-    }
-
-    err = DisplaySettings();
-    if (err != noError) {
-        return err;
-    }
-
-    DisplayTimeEntryList();
-
-    return noError;
-}
-
 error Context::SetSettingsUseIdleDetection(const bool use_idle_detection) {
     error err = db()->SetSettingsUseIdleDetection(use_idle_detection);
     if (err != noError) {
@@ -2173,14 +2161,15 @@ Poco::Int64 Context::totalDurationForDate(const TimeEntry *match) {
     timeEntries(&list);
     for (unsigned int i = 0; i < list.size(); i++) {
         TimedEvent *te = list.at(i);
-        if (te->Type() != kTimedEventTypeTimeEntry) {
-            continue;
-        }
         if (Formatter::FormatDateHeader(te->Start()) == date_header) {
             duration += Formatter::AbsDuration(te->Duration());
         }
     }
     return duration;
+}
+
+void Context::DisplayTimeline(const bool open) {
+    // FIXME: display timeline
 }
 
 void Context::DisplayTimeEntryList(const bool open) {
@@ -2195,10 +2184,6 @@ void Context::DisplayTimeEntryList(const bool open) {
 
     std::vector<TimedEvent *> list;
     timeEntries(&list);
-
-    if (kExperimentalFeatureRenderTimeline && settings_.render_timeline) {
-        timelineEvents(&list);
-    }
 
     std::sort(list.begin(), list.end(), CompareByStart);
 

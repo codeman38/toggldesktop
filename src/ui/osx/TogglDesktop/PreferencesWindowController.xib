@@ -34,7 +34,6 @@
                 <outlet property="remindWed" destination="E0j-Uw-3Nz" id="BSu-Cd-aT5"/>
                 <outlet property="reminderCheckbox" destination="Spu-c6-dBl" id="rce-jc-2Cq"/>
                 <outlet property="reminderMinutesTextField" destination="R9v-BZ-yhR" id="OVt-ic-hzF"/>
-                <outlet property="renderTimeline" destination="pMq-HI-FjT" id="kqw-uL-seP"/>
                 <outlet property="showHideShortcutView" destination="DLB-Fw-7tX" id="T2o-mF-KXG"/>
                 <outlet property="startStopShortcutView" destination="Ft4-tk-xRA" id="5tb-G5-s2R"/>
                 <outlet property="useIdleDetectionButton" destination="Lgk-gZ-8Ha" id="Erp-FO-vcw"/>
@@ -100,7 +99,7 @@
                                             <rect key="frame" x="288" y="222" width="140" height="19"/>
                                         </customView>
                                         <box verticalHuggingPriority="750" fixedFrame="YES" title="Box" boxType="separator" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="LUN-WN-NDq">
-                                            <rect key="frame" x="18" y="211" width="410" height="5"/>
+                                            <rect key="frame" x="18" y="211" width="410" height="4"/>
                                             <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                                             <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                             <font key="titleFont" metaFont="system"/>
@@ -200,18 +199,6 @@
                                             </buttonCell>
                                             <connections>
                                                 <action selector="openEditorOnShortcut:" target="-2" id="OWz-rT-1io"/>
-                                                <outlet property="nextKeyView" destination="pMq-HI-FjT" id="Kj3-fe-tGK"/>
-                                            </connections>
-                                        </button>
-                                        <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pMq-HI-FjT">
-                                            <rect key="frame" x="16" y="29" width="387" height="18"/>
-                                            <buttonCell key="cell" type="check" title="Render timeline" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="zWr-Pl-lB1">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                            </buttonCell>
-                                            <connections>
-                                                <action selector="renderTimelineChanged:" target="-2" id="fe7-2g-czt"/>
-                                                <outlet property="nextKeyView" destination="DLB-Fw-7tX" id="xd6-9f-Ker"/>
                                             </connections>
                                         </button>
                                     </subviews>

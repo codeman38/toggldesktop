@@ -40,9 +40,6 @@ extern "C" {
 #define kSyncStateIdle 0
 #define kSyncStateWork 1
 
-#define kTimedEventTypeTimelineEvent 1
-#define kTimedEventTypeTimeEntry 2
-
 // Experimental features
 
 #define kExperimentalFeatureRenderTimeline true
@@ -82,12 +79,17 @@ extern "C" {
         // If syncing a time entry ended with an error,
         // the error is attached to the time entry
         char_t *Error;
-        // kTimedEventTypeTimelineEvent 1
-        // kTimedEventTypeTimeEntry 2
-        uint64_t ViewType;
         // Next in list
         void *Next;
     } TogglTimeEntryView;
+
+    typedef struct {
+        char_t *Filename;
+        char_t *Title;
+        char_t *GUID;
+        // Next in list
+        void *Next;
+    } TogglTimelineView;
 
     typedef struct {
         // This is what is displayed to user, includes project and task.
@@ -144,7 +146,6 @@ extern "C" {
         char_t *RemindEnds;
         bool_t Autotrack;
         bool_t OpenEditorOnShortcut;
-        bool_t RenderTimeline;
     } TogglSettingsView;
 
     typedef struct {
@@ -525,10 +526,6 @@ extern "C" {
         void *context,
         const char_t *remind_starts,
         const char_t *remind_ends);
-
-    TOGGL_EXPORT bool_t toggl_set_settings_render_timeline(
-        void *context,
-        const bool_t value);
 
     TOGGL_EXPORT bool_t toggl_set_settings_use_idle_detection(
         void *context,

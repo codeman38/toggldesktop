@@ -249,9 +249,6 @@ void GUI::DisplayTimeEntryList(const bool open,
     std::map<std::string, Poco::Int64> date_durations;
     for (unsigned int i = 0; i < list.size(); i++) {
         TimedEvent *te = list.at(i);
-        if (te->Type() != kTimedEventTypeTimeEntry) {
-            continue;
-        }
         std::string date_header = Formatter::FormatDateHeader(te->Start());
         Poco::Int64 duration = date_durations[date_header];
         duration += Formatter::AbsDuration(te->Duration());
@@ -275,38 +272,30 @@ void GUI::DisplayTimeEntryList(const bool open,
 
         TogglTimeEntryView *item = nullptr;
 
-        if (te->Type() == kTimedEventTypeTimeEntry) {
-            TimeEntry *time_entry = static_cast<TimeEntry *>(te);
-            std::string workspace_name("");
-            std::string project_and_task_label("");
-            std::string task_label("");
-            std::string project_label("");
-            std::string client_label("");
-            std::string color("");
-            related.ProjectLabelAndColorCode(time_entry,
-                                             &workspace_name,
-                                             &project_and_task_label,
-                                             &task_label,
-                                             &project_label,
-                                             &client_label,
-                                             &color);
+        TimeEntry *time_entry = static_cast<TimeEntry *>(te);
+        std::string workspace_name("");
+        std::string project_and_task_label("");
+        std::string task_label("");
+        std::string project_label("");
+        std::string client_label("");
+        std::string color("");
+        related.ProjectLabelAndColorCode(time_entry,
+                                         &workspace_name,
+                                         &project_and_task_label,
+                                         &task_label,
+                                         &project_label,
+                                         &client_label,
+                                         &color);
 
-            item = time_entry_view_item_init(time_entry,
-                                             workspace_name,
-                                             project_and_task_label,
-                                             task_label,
-                                             project_label,
-                                             client_label,
-                                             color,
-                                             date_duration,
-                                             false);
-        } else if (te->Type() == kTimedEventTypeTimelineEvent) {
-            TimelineEvent *timeline_event = static_cast<TimelineEvent *>(te);
-            item = time_entry_view_item_init(timeline_event,
-                                             date_duration,
-                                             false);
-        }
-        poco_assert(item->ViewType);
+        item = time_entry_view_item_init(time_entry,
+                                         workspace_name,
+                                         project_and_task_label,
+                                         task_label,
+                                         project_label,
+                                         client_label,
+                                         color,
+                                         date_duration,
+                                         false);
         item->Next = first;
         if (first && compare_string(item->DateHeader, first->DateHeader) != 0) {
             first->IsHeader = true;

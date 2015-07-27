@@ -76,8 +76,6 @@ class Context : public TimelineDatasource {
         update_check_disabled_ = true;
     }
 
-    error SetSettingsRenderTimeline(const bool &value);
-
     error SetSettingsUseIdleDetection(const bool use_idle_detection);
 
     error SetSettingsAutotrack(const bool value);
@@ -167,6 +165,8 @@ class Context : public TimelineDatasource {
         const std::string GUID);
 
     void DisplayTimeEntryList(const bool open = false);
+
+    void DisplayTimeline(const bool open = false);
 
     error DisplaySettings(const bool open = false);
 

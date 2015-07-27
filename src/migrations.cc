@@ -1035,6 +1035,14 @@ error Migrations::migrateSettings() {
         return err;
     }
 
+    err = db_->Migrate(
+        "drop settings.render_timeline",
+        "ALTER TABLE settings "
+        "DROP COLUMN render_timeline;");
+    if (err != noError) {
+        return err;
+    }
+
     return noError;
 }
 
