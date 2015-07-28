@@ -13,6 +13,7 @@
 @interface DisplayCommand : NSObject
 @property BOOL open;
 @property NSMutableArray *timeEntries;
+@property NSMutableArray *timeline;
 @property TimeEntryViewItem *timeEntry;
 @property Settings *settings;
 @property uint64_t user_id;

@@ -24,8 +24,8 @@ class Client;
 class Project;
 class RelatedData;
 class User;
-class TimedEvent;
 class TimeEntry;
+class TimelineEvent;
 class Workspace;
 
 class GUI : public SyncStateMonitor {
@@ -53,7 +53,8 @@ class GUI : public SyncStateMonitor {
     , on_display_update_(nullptr)
     , on_display_autotracker_rules_(nullptr)
     , on_display_autotracker_notification_(nullptr)
-    , on_display_promotion_(nullptr) {}
+    , on_display_promotion_(nullptr)
+    , on_display_timeline_(nullptr) {}
 
     ~GUI() {}
 
@@ -80,7 +81,11 @@ class GUI : public SyncStateMonitor {
     void DisplayTimeEntryList(
         const bool open,
         const RelatedData &related,
-        const std::vector<TimedEvent *> list);
+        const std::vector<TimeEntry *> list);
+
+    void DisplayTimeline(
+        const bool open,
+        const std::vector<TimelineEvent *> list);
 
     void DisplayWorkspaceSelect(std::vector<toggl::Workspace *> *list);
 
@@ -223,6 +228,10 @@ class GUI : public SyncStateMonitor {
         return !!on_display_update_;
     }
 
+    bool CanDisplayTimeline() const {
+        return !!on_display_timeline_;
+    }
+
     bool CanDisplayAutotrackerRules() const {
         return !!on_display_autotracker_rules_;
     }
@@ -235,6 +244,10 @@ class GUI : public SyncStateMonitor {
         if (on_display_promotion_) {
             on_display_promotion_(promotion_type);
         }
+    }
+
+    void OnDisplayTimeline(TogglDisplayTimeline cb) {
+        on_display_timeline_ = cb;
     }
 
  private:
@@ -263,6 +276,7 @@ class GUI : public SyncStateMonitor {
     TogglDisplayAutotrackerRules on_display_autotracker_rules_;
     TogglDisplayAutotrackerNotification on_display_autotracker_notification_;
     TogglDisplayPromotion on_display_promotion_;
+    TogglDisplayTimeline on_display_timeline_;
 
     Poco::Logger &logger() const;
 };

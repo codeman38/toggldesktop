@@ -358,11 +358,9 @@ void Context::updateUI(std::vector<ModelChange> *changes) {
         }
 
         if (ch.ModelType() == kModelTimelineEvent) {
-            if (kExperimentalFeatureRenderTimeline) {
-                Poco::Mutex::ScopedLock lock(user_m_);
-                if (user_ && user_->RecordTimeline()) {
-                    display_timeline = true;
-                }
+            Poco::Mutex::ScopedLock lock(user_m_);
+            if (user_ && user_->RecordTimeline()) {
+                display_timeline = true;
             }
         }
 
@@ -2157,7 +2155,7 @@ TimeEntry *Context::Start(
 Poco::Int64 Context::totalDurationForDate(const TimeEntry *match) {
     Poco::Int64 duration(0);
     std::string date_header = Formatter::FormatDateHeader(match->Start());
-    std::vector<TimedEvent *> list;
+    std::vector<TimeEntry *> list;
     timeEntries(&list);
     for (unsigned int i = 0; i < list.size(); i++) {
         TimedEvent *te = list.at(i);
@@ -2169,7 +2167,22 @@ Poco::Int64 Context::totalDurationForDate(const TimeEntry *match) {
 }
 
 void Context::DisplayTimeline(const bool open) {
-    // FIXME: display timeline
+    if (!UI()->CanDisplayTimeline()) {
+        return;
+    }
+
+    Poco::Mutex::ScopedLock lock(user_m_);
+    if (!user_) {
+        logger().warning("Cannot view timeline, user logged out");
+        return;
+    }
+
+    std::vector<TimelineEvent *> list;
+    timelineEvents(&list);
+
+    std::sort(list.begin(), list.end(), CompareByStart);
+
+    UI()->DisplayTimeline(open, list);
 }
 
 void Context::DisplayTimeEntryList(const bool open) {
@@ -2182,7 +2195,7 @@ void Context::DisplayTimeEntryList(const bool open) {
     Poco::Stopwatch stopwatch;
     stopwatch.start();
 
-    std::vector<TimedEvent *> list;
+    std::vector<TimeEntry *> list;
     timeEntries(&list);
 
     std::sort(list.begin(), list.end(), CompareByStart);
@@ -2847,7 +2860,7 @@ error Context::ToggleTimelineRecording(const bool record_timeline) {
 }
 
 void Context::timelineEvents(
-    std::vector<TimedEvent *> *result) {
+    std::vector<TimelineEvent *> *result) {
 
     Poco::Mutex::ScopedLock lock(user_m_);
     if (!user_) {
@@ -2870,7 +2883,7 @@ void Context::timelineEvents(
 }
 
 void Context::timeEntries(
-    std::vector<TimedEvent *> *result) {
+    std::vector<TimeEntry *> *result) {
 
     Poco::Mutex::ScopedLock lock(user_m_);
     if (!user_) {

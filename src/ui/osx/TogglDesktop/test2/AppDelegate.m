@@ -1108,6 +1108,7 @@ const NSString *appName = @"osx_native_app";
 	toggl_on_autotracker_rules(ctx, on_autotracker_rules);
 	toggl_on_autotracker_notification(ctx, on_autotracker_notification);
 	toggl_on_promotion(ctx, on_promotion);
+	toggl_on_timeline(ctx, on_timeline);
 
 	NSLog(@"Version %@", self.version);
 
@@ -1385,6 +1386,27 @@ void on_time_entry_list(const bool_t open,
 	cmd.open = open;
 	cmd.timeEntries = viewitems;
 	[[NSNotificationCenter defaultCenter] postNotificationName:kDisplayTimeEntryList
+														object:cmd];
+}
+
+void on_timeline(const bool_t open,
+				 TogglTimelineView *first)
+{
+	NSMutableArray *viewitems = [[NSMutableArray alloc] init];
+	TogglTimelineView *it = first;
+
+	while (it)
+		/*
+		 * FIXME: load view
+		 * TimeEntryViewItem *model = [[TimeEntryViewItem alloc] init];
+		 * [model load:it];
+		 * [viewitems addObject:model];
+		 */
+		it = it->Next;
+	DisplayCommand *cmd = [[DisplayCommand alloc] init];
+	cmd.open = open;
+	cmd.timeline = viewitems;
+	[[NSNotificationCenter defaultCenter] postNotificationName:kDisplayTimeline
 														object:cmd];
 }
 

@@ -40,10 +40,6 @@ extern "C" {
 #define kSyncStateIdle 0
 #define kSyncStateWork 1
 
-// Experimental features
-
-#define kExperimentalFeatureRenderTimeline true
-
 // Models
 
     typedef struct {
@@ -84,9 +80,8 @@ extern "C" {
     } TogglTimeEntryView;
 
     typedef struct {
-        char_t *Filename;
-        char_t *Title;
-        char_t *GUID;
+        char_t *Text;
+        char_t *StartTimeString;
         // Next in list
         void *Next;
     } TogglTimelineView;
@@ -239,6 +234,10 @@ extern "C" {
         const uint64_t title_count,
         char_t *title_list[]);
 
+    typedef void (*TogglDisplayTimeline)(
+        const bool_t open,
+        TogglTimelineView *first);
+
     // Initialize/destroy an instance of the app
 
     TOGGL_EXPORT void *toggl_context_init(
@@ -347,6 +346,10 @@ extern "C" {
     TOGGL_EXPORT void toggl_on_time_entry_list(
         void *context,
         TogglDisplayTimeEntryList);
+
+    TOGGL_EXPORT void toggl_on_timeline(
+        void *context,
+        TogglDisplayTimeline);
 
     TOGGL_EXPORT void toggl_on_mini_timer_autocomplete(
         void *context,

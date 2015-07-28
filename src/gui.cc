@@ -235,7 +235,7 @@ void GUI::DisplayProjectAutocomplete(
 
 void GUI::DisplayTimeEntryList(const bool open,
                                const RelatedData &related,
-                               const std::vector<TimedEvent *> list) {
+                               const std::vector<TimeEntry *> list) {
     Poco::Stopwatch stopwatch;
     stopwatch.start();
     {
@@ -258,7 +258,7 @@ void GUI::DisplayTimeEntryList(const bool open,
     // Render
     TogglTimeEntryView *first = nullptr;
     for (unsigned int i = 0; i < list.size(); i++) {
-        TimedEvent *te = list.at(i);
+        TimeEntry *te = list.at(i);
 
         if (te->Duration() < 0) {
             // Don't display running entries
@@ -272,14 +272,13 @@ void GUI::DisplayTimeEntryList(const bool open,
 
         TogglTimeEntryView *item = nullptr;
 
-        TimeEntry *time_entry = static_cast<TimeEntry *>(te);
         std::string workspace_name("");
         std::string project_and_task_label("");
         std::string task_label("");
         std::string project_label("");
         std::string client_label("");
         std::string color("");
-        related.ProjectLabelAndColorCode(time_entry,
+        related.ProjectLabelAndColorCode(te,
                                          &workspace_name,
                                          &project_and_task_label,
                                          &task_label,
@@ -287,7 +286,7 @@ void GUI::DisplayTimeEntryList(const bool open,
                                          &client_label,
                                          &color);
 
-        item = time_entry_view_item_init(time_entry,
+        item = time_entry_view_item_init(te,
                                          workspace_name,
                                          project_and_task_label,
                                          task_label,
@@ -318,6 +317,38 @@ void GUI::DisplayTimeEntryList(const bool open,
            << stopwatch.elapsed() / 1000 << " ms";
         logger().debug(ss.str());
     }
+}
+
+void GUI::DisplayTimeline(const bool open,
+                          const std::vector<TimelineEvent *> list) {
+    Poco::Stopwatch stopwatch;
+    stopwatch.start();
+    {
+        std::stringstream ss;
+        ss << "DisplayTimeline open=" << open
+           << ", has items=" << list.size();
+        logger().debug(ss.str());
+    }
+
+    // Render
+    TogglTimelineView *first = nullptr;
+    for (unsigned int i = 0; i < list.size(); i++) {
+        TimelineEvent *ev = list.at(i);
+
+        if (ev->DeletedAt()) {
+            continue;
+        }
+
+        TogglTimelineView *item = nullptr;
+
+        item = timeline_view_init(ev);
+        item->Next = first;
+        first = item;
+    }
+
+    on_display_timeline_(open, first);
+
+    timeline_view_clear(first);
 }
 
 void GUI::DisplayTags(std::vector<std::string> *tags) {

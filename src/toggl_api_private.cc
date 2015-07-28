@@ -326,41 +326,41 @@ void time_entry_view_item_clear(
     delete item;
 }
 
-TogglTimelineView *timeline_view_item_init(
-    const toggl::TimelineEvent *te) {
+TogglTimelineView *timeline_view_init(
+    const toggl::TimelineEvent *ev) {
 
-    poco_check_ptr(te);
+    poco_check_ptr(ev);
 
     TogglTimelineView *view_item = new TogglTimelineView();
     poco_check_ptr(view_item);
 
-    view_item->Filename = copy_string(te->Filename());
-    view_item->Title = copy_string(te->Title());
-    view_item->GUID = copy_string(te->GUID());
+    view_item->Text = copy_string(ev->Title());
+
+    std::string start_time_string =
+        toggl::Formatter::FormatTimeForTimeEntryEditor(ev->Start());
+
+    view_item->StartTimeString = copy_string(start_time_string);
 
     view_item->Next = nullptr;
 
     return view_item;
 }
 
-void timeline_view_item_clear(
+void timeline_view_clear(
     TogglTimelineView *item) {
     if (!item) {
         return;
     }
-    free(item->Title);
-    item->Title = nullptr;
+    free(item->Text);
+    item->Text = nullptr;
 
-    free(item->Filename);
-    item->Filename = nullptr;
-
-    free(item->GUID);
-    item->GUID = nullptr;
+    free(item->StartTimeString);
+    item->StartTimeString = nullptr;
 
     if (item->Next) {
         TogglTimelineView *next =
             reinterpret_cast<TogglTimelineView *>(item->Next);
-        timeline_view_item_clear(next);
+        timeline_view_clear(next);
         item->Next = nullptr;
     }
 

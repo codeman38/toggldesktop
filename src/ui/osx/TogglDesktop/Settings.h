@@ -38,5 +38,4 @@
 @property BOOL remind_sun;
 @property BOOL autotrack;
 @property BOOL open_editor_on_shortcut;
-@property BOOL render_timeline;
 @end
