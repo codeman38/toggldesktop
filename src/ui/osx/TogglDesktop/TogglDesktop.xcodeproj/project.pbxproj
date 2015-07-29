@@ -944,7 +944,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0610;
-				ORGANIZATIONNAME = Alari;
+				ORGANIZATIONNAME = "Toggl Desktop Developers";
 			};
 			buildConfigurationList = 69FC17EC17E6534400B96425 /* Build configuration list for PBXProject "TogglDesktop" */;
 			compatibilityVersion = "Xcode 3.2";
