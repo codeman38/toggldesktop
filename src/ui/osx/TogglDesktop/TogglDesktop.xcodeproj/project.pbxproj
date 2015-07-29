@@ -112,6 +112,8 @@
 		74E857BC194F8854007A88B9 /* cacert.pem in Resources */ = {isa = PBXBuildFile; fileRef = 74E857AB194F8807007A88B9 /* cacert.pem */; };
 		74F1070118993FFE00E93BD5 /* FeedbackWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 74F106FF18993FFE00E93BD5 /* FeedbackWindowController.m */; };
 		74F1070218993FFE00E93BD5 /* FeedbackWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 74F1070018993FFE00E93BD5 /* FeedbackWindowController.xib */; };
+		74F358A91B6905CD00C2EE1C /* TimelineWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 74F358A71B6905CD00C2EE1C /* TimelineWindowController.m */; };
+		74F358AA1B6905CD00C2EE1C /* TimelineWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 74F358A81B6905CD00C2EE1C /* TimelineWindowController.xib */; };
 		74F8FBA318313FA6000F09EE /* NSTextFieldClickable.m in Sources */ = {isa = PBXBuildFile; fileRef = 74F8FBA218313FA6000F09EE /* NSTextFieldClickable.m */; };
 		74FE0D3C18E25E8400ECFED2 /* app_inactive.icns in Resources */ = {isa = PBXBuildFile; fileRef = 74FE0D3B18E25E8400ECFED2 /* app_inactive.icns */; };
 		74FE0D5C18E260A000ECFED2 /* MASShortcut+Monitoring.m in Sources */ = {isa = PBXBuildFile; fileRef = 74FE0D5018E260A000ECFED2 /* MASShortcut+Monitoring.m */; };
@@ -450,6 +452,9 @@
 		74F106FE18993FFE00E93BD5 /* FeedbackWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FeedbackWindowController.h; path = ../FeedbackWindowController.h; sourceTree = "<group>"; };
 		74F106FF18993FFE00E93BD5 /* FeedbackWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FeedbackWindowController.m; path = ../FeedbackWindowController.m; sourceTree = "<group>"; };
 		74F1070018993FFE00E93BD5 /* FeedbackWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = FeedbackWindowController.xib; path = ../FeedbackWindowController.xib; sourceTree = "<group>"; };
+		74F358A61B6905CD00C2EE1C /* TimelineWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimelineWindowController.h; sourceTree = "<group>"; };
+		74F358A71B6905CD00C2EE1C /* TimelineWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TimelineWindowController.m; sourceTree = "<group>"; };
+		74F358A81B6905CD00C2EE1C /* TimelineWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = TimelineWindowController.xib; sourceTree = "<group>"; };
 		74F8FBA118313FA6000F09EE /* NSTextFieldClickable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSTextFieldClickable.h; sourceTree = "<group>"; };
 		74F8FBA218313FA6000F09EE /* NSTextFieldClickable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSTextFieldClickable.m; sourceTree = "<group>"; };
 		74FD8CD718A8EEE200F7DB80 /* TFDatePicker.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = TFDatePicker.xcodeproj; path = ../../../../third_party/TFDatePicker/TFDatePicker/TFDatePicker.xcodeproj; sourceTree = "<group>"; };
@@ -671,6 +676,9 @@
 				74098C321919899600CBDFB9 /* Utils.m */,
 				74BAD31C18BD7D83002FD4CF /* ViewItem.h */,
 				74BAD31D18BD7D83002FD4CF /* ViewItem.m */,
+				74F358A61B6905CD00C2EE1C /* TimelineWindowController.h */,
+				74F358A71B6905CD00C2EE1C /* TimelineWindowController.m */,
+				74F358A81B6905CD00C2EE1C /* TimelineWindowController.xib */,
 			);
 			name = ui;
 			path = test2;
@@ -1108,6 +1116,7 @@
 				95DBF8CD18BF7A910021FB41 /* offline_on.pdf in Resources */,
 				69FC180B17E6534500B96425 /* MainMenu.xib in Resources */,
 				C5DA1FC017F1B08A001C4565 /* MainWindowController.xib in Resources */,
+				74F358AA1B6905CD00C2EE1C /* TimelineWindowController.xib in Resources */,
 				74D1D25817EB713F00E709B0 /* TimeEntryListViewController.xib in Resources */,
 				3C8979B71920B7B7007061E0 /* continue.pdf in Resources */,
 				74D1D25F17EB71C100E709B0 /* TimeEntryEditViewController.xib in Resources */,
@@ -1212,6 +1221,7 @@
 				74A7346A18297DD100525BBC /* ConvertHexColor.m in Sources */,
 				74BAAA0B17F37B140079386F /* TimeEntryViewItem.m in Sources */,
 				7423393C1829B99C00063FA9 /* IdleNotificationWindowController.m in Sources */,
+				74F358A91B6905CD00C2EE1C /* TimelineWindowController.m in Sources */,
 				7430750418204EFB009019CB /* AboutWindowController.m in Sources */,
 				74D1D27217EB72D900E709B0 /* TimerEditViewController.m in Sources */,
 				741104BF18C7682700BC7A49 /* NSTextFieldWithBackground.m in Sources */,
