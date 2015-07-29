@@ -4,7 +4,7 @@
 //  Toggl Desktop on the Mac
 //
 //  Created by Tanel Lebedev on 19/09/2013.
-//  Copyright (c) 2013 TogglDesktop developers. All rights reserved.
+//  Copyright (c) 2013 Toggl Desktop Developers. All rights reserved.
 //
 #import "TimerEditViewController.h"
 #import "UIEvents.h"

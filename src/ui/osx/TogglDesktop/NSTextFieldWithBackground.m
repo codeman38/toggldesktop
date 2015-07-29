@@ -3,7 +3,7 @@
 //  Toggl Desktop on the Mac
 //
 //  Created by Tanel Lebedev on 05/03/2014.
-//  Copyright (c) 2014 Alari. All rights reserved.
+//  Copyright (c) 2014 Toggl Desktop Developers. All rights reserved.
 //
 
 #import "NSTextFieldWithBackground.h"

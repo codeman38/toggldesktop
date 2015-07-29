@@ -3,7 +3,7 @@
 //  TogglDesktop
 //
 //  Created by Indrek Vändrik on 02/06/14.
-//  Copyright (c) 2014 Alari. All rights reserved.
+//  Copyright (c) 2014 Toggl Desktop Developers. All rights reserved.
 //
 
 #import "NSCustomTimerComboBox.h"

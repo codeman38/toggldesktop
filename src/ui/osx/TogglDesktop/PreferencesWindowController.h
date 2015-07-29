@@ -1,7 +1,7 @@
 //
 //  PreferencesWindowController.h
 //
-//  Copyright (c) 2014 TogglDesktop developers. All rights reserved.
+//  Copyright (c) 2014 Toggl Desktop Developers. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>

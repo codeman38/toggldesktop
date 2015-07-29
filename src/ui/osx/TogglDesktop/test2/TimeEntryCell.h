@@ -3,7 +3,7 @@
 //  Toggl Desktop on the Mac
 //
 //  Created by Tambet Masik on 9/26/13.
-//  Copyright (c) 2013 TogglDesktop developers. All rights reserved.
+//  Copyright (c) 2013 Toggl Desktop Developers. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>

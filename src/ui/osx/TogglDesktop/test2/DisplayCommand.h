@@ -3,7 +3,7 @@
 //  TogglDesktop
 //
 //  Created by Tanel Lebedev on 13/05/14.
-//  Copyright (c) 2014 Alari. All rights reserved.
+//  Copyright (c) 2014 Toggl Desktop Developers. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
