@@ -22,6 +22,7 @@
 #import "MainWindowController.h"
 #import "MenuItemTags.h"
 #import "PreferencesWindowController.h"
+#import "TimelineWindowController.h"
 #import "Settings.h"
 #import "Sparkle.h"
 #import "TimeEntryViewItem.h"
@@ -38,6 +39,7 @@
 @property (nonatomic, strong) IBOutlet IdleNotificationWindowController *idleNotificationWindowController;
 @property (nonatomic, strong) IBOutlet FeedbackWindowController *feedbackWindowController;
 @property (nonatomic, strong) IBOutlet ConsoleViewController *consoleWindowController;
+@property (nonatomic, strong) IBOutlet TimelineWindowController *timelineWindowController;
 
 // Remember some app state
 @property TimeEntryViewItem *lastKnownRunningTimeEntry;
@@ -165,6 +167,9 @@ BOOL manualMode = NO;
 	self.feedbackWindowController = [[FeedbackWindowController alloc]
 									 initWithWindowNibName:@"FeedbackWindowController"];
 
+	self.timelineWindowController = [[TimelineWindowController alloc]
+									 initWithWindowNibName:@"TimelineWindowController"];
+
 	[self createStatusItem];
 
 	[[NSNotificationCenter defaultCenter] addObserver:self
@@ -218,6 +223,10 @@ BOOL manualMode = NO;
 	[[NSNotificationCenter defaultCenter] addObserver:self
 											 selector:@selector(startDisplayPromotion:)
 												 name:kDisplayPromotion
+											   object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self
+											 selector:@selector(startDisplayTimeline:)
+												 name:kDisplayTimeline
 											   object:nil];
 
 	toggl_set_environment(ctx, [self.environment UTF8String]);
@@ -543,6 +552,24 @@ BOOL manualMode = NO;
 														object:nil];
 }
 
+- (void)startDisplayTimeline:(NSNotification *)notification
+{
+	[self performSelectorOnMainThread:@selector(displayTimeline:)
+						   withObject:notification.object
+						waitUntilDone:NO];
+}
+
+- (void)displayTimeline:(DisplayCommand *)cmd
+{
+	NSAssert([NSThread isMainThread], @"Rendering stuff should happen on main thread");
+
+	if (cmd.open)
+	{
+		[self.timelineWindowController showWindow:self];
+		[NSApp activateIgnoringOtherApps:YES];
+	}
+}
+
 - (void)startDisplayApp:(NSNotification *)notification
 {
 	[self performSelectorOnMainThread:@selector(displayApp:)
@@ -823,9 +850,9 @@ BOOL manualMode = NO;
 	[menu addItemWithTitle:@"Preferences"
 					action:@selector(onPreferencesMenuItem:)
 			 keyEquivalent:@""];
-	[menu addItemWithTitle:@"Record Timeline"
-					action:@selector(onToggleRecordTimeline:)
-			 keyEquivalent:@""].tag = kMenuItemRecordTimeline;
+	[menu addItemWithTitle:@"Timeline"
+					action:@selector(onTimelineMenuItem:)
+			 keyEquivalent:@""].tag = kMenuTimeline;
 	self.manualModeMenuItem = [menu addItemWithTitle:@"Use manual mode"
 											  action:@selector(onModeChange:)
 									   keyEquivalent:@"d"];
@@ -907,12 +934,6 @@ BOOL manualMode = NO;
 	toggl_sync(ctx);
 }
 
-- (IBAction)onToggleRecordTimeline:(id)sender
-{
-	toggl_timeline_toggle_recording(ctx,
-									!toggl_timeline_is_recording_enabled(ctx));
-}
-
 - (IBAction)onModeChange:(id)sender
 {
 	manualMode = !manualMode;
@@ -972,6 +993,11 @@ BOOL manualMode = NO;
 - (IBAction)onPreferencesMenuItem:(id)sender
 {
 	toggl_edit_preferences(ctx);
+}
+
+- (IBAction)onTimelineMenuItem:(id)sender
+{
+	toggl_view_timeline(ctx);
 }
 
 - (IBAction)onHideMenuItem:(id)sender
@@ -1200,22 +1226,10 @@ const NSString *appName = @"osx_native_app";
 				return NO;
 			}
 			break;
-		case kMenuItemRecordTimeline :
+		case kMenuTimeline :
 			if (!self.lastKnownUserID)
 			{
-				NSMenuItem *menuItem = (NSMenuItem *)anItem;
-				[menuItem setState:NSOffState];
 				return NO;
-			}
-			if (toggl_timeline_is_recording_enabled(ctx))
-			{
-				NSMenuItem *menuItem = (NSMenuItem *)anItem;
-				[menuItem setState:NSOnState];
-			}
-			else
-			{
-				NSMenuItem *menuItem = (NSMenuItem *)anItem;
-				[menuItem setState:NSOffState];
 			}
 			break;
 		default :

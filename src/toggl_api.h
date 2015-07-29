@@ -662,18 +662,15 @@ extern "C" {
     TOGGL_EXPORT void toggl_sync(
         void *context);
 
+    TOGGL_EXPORT void toggl_view_timeline(
+        void *context);
+
     TOGGL_EXPORT bool_t toggl_timeline_toggle_recording(
         void *context,
         const bool_t record_timeline);
 
     TOGGL_EXPORT bool_t toggl_timeline_is_recording_enabled(
         void *context);
-
-    // Returns GUID of the created time entry,
-    // if successful. You must free() the result.
-    TOGGL_EXPORT char_t *toggl_timeline_save_as_time_entry(
-        void *context,
-        const char_t *guid);
 
     TOGGL_EXPORT void toggl_set_sleep(
         void *context);

@@ -2171,12 +2171,6 @@ void Context::DisplayTimeline(const bool open) {
         return;
     }
 
-    Poco::Mutex::ScopedLock lock(user_m_);
-    if (!user_) {
-        logger().warning("Cannot view timeline, user logged out");
-        return;
-    }
-
     std::vector<TimelineEvent *> list;
     timelineEvents(&list);
 

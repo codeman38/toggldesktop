@@ -321,6 +321,11 @@ void GUI::DisplayTimeEntryList(const bool open,
 
 void GUI::DisplayTimeline(const bool open,
                           const std::vector<TimelineEvent *> list) {
+    if (!CanDisplayTimeline()) {
+        logger().error("UI does not support rendering timeline");
+        return;
+    }
+
     Poco::Stopwatch stopwatch;
     stopwatch.start();
     {

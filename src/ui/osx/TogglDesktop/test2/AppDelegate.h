@@ -14,6 +14,7 @@
 @property (strong) NSImage *activeAppIcon;
 @property (retain, nonatomic) Reachability *reach;
 - (IBAction)onPreferencesMenuItem:(id)sender;
+- (IBAction)onTimelineMenuItem:(id)sender;
 - (IBAction)onAboutMenuItem:(id)sender;
 - (IBAction)onSyncMenuItem:(id)sender;
 - (IBAction)onShowMenuItem:(id)sender;

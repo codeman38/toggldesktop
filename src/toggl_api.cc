@@ -491,6 +491,10 @@ bool_t toggl_continue(
     return toggl::noError == app(context)->Continue(to_string(guid));
 }
 
+void toggl_view_timeline(void *context) {
+    app(context)->DisplayTimeline(true);
+}
+
 void toggl_view_time_entry_list(void *context) {
     app(context)->DisplayTimeEntryList(true);
 }
@@ -738,21 +742,6 @@ bool_t toggl_timeline_toggle_recording(
 bool_t toggl_timeline_is_recording_enabled(
     void *context) {
     return app(context)->IsTimelineRecordingEnabled();
-}
-
-char_t *toggl_timeline_save_as_time_entry(
-    void *context,
-    const char_t *guid) {
-    std::string timeline_event_guid("");
-    if (guid) {
-        timeline_event_guid = to_string(guid);
-    }
-    toggl::TimeEntry *te =
-        app(context)->SaveTimelineAsTimeEntry(timeline_event_guid);
-    if (te) {
-        return copy_string(te->GUID());
-    }
-    return nullptr;
 }
 
 bool_t toggl_feedback_send(
