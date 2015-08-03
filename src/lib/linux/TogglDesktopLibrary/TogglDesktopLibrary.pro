@@ -23,6 +23,8 @@ SOURCES += \
     ../../../idle.cc \
     ../../../analytics.cc \
     ../../../autotracker.cc \
+    ../../../urls.cc \
+    ../../../migrations.cc \
     ../../../context.cc \
     ../../../custom_error_handler.cc \
     ../../../database.cc \
@@ -43,6 +45,7 @@ SOURCES += \
     ../../../settings.cc \
     ../../../tag.cc \
     ../../../task.cc \
+    ../../../timeline_event.cc \
     ../../../time_entry.cc \
     ../../../timeline_uploader.cc \
     ../../../user.cc \
@@ -93,7 +96,9 @@ HEADERS += \
     ../../../idle.h \
     ../../../analytics.h \
     ../../../autotracker.h \
+    ../../../urls.h \
     ../../../context.h \
+    ../../../migrations.h \
     ../../../custom_error_handler.h \
     ../../../database.h \
     ../../../feedback.h \

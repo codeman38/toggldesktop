@@ -22,9 +22,6 @@
 #define kTimelineUploadIntervalSeconds 60
 #define kTimelineUploadMaxBackoffSeconds (kTimelineUploadIntervalSeconds * 10)  // NOLINT
 
-#define kAPIURL "https://www.toggl.com"
-#define kTimelineUploadURL "https://timeline.toggl.com"
-#define kWebSocketURL "https://stream.toggl.com"
 #define kLostPasswordURL "https://toggl.com/forgot-password?desktop=true"
 #define kSupportURL "http://support.toggl.com/toggl-on-my-desktop/"
 
@@ -62,30 +59,21 @@
 #define kCannotDeleteDeletedTimeEntry "Cannot delete deleted time entry"
 #define kErrorRuleAlreadyExists "rule already exists"
 
-#define kOnlineStateOnline 0
-#define kOnlineStateNoNetwork 1
-#define kOnlineStateBackendDown 2
-
-#define kSyncStateIdle 0
-#define kSyncStateWork 1
-
-#define kRemindOncePerDay
-#define kRemindEveryHalfHour
-#define kRemindEveryHour
-
-#define kModelUser "user"
+#define kModelAutotrackerRule "autotracker_rule"
+#define kModelClient "client"
+#define kModelProject "project"
+#define kModelSettings "settings"
 #define kModelTag "tag"
 #define kModelTask "task"
-#define kModelProject "project"
-#define kModelClient "client"
-#define kModelWorkspace "workspace"
 #define kModelTimeEntry "time_entry"
-#define kModelAutotrackerRule "autotracker_rule"
+#define kModelTimelineEvent "timeline_event"
+#define kModelUser "user"
+#define kModelWorkspace "workspace"
+
+#define kChangeTypeInsert "insert"
+#define kChangeTypeUpdate "update"
+#define kChangeTypeDelete "delete"
 
 #define kPromotionJoinBetaChannel 1
-
-// Optional features
-
-#define kTrackSettingsUsage false
 
 #endif  // SRC_CONST_H_

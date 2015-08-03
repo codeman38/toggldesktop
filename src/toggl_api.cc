@@ -9,6 +9,7 @@
 
 #include "./toggl_api_lua.h"
 
+#include "./client.h"
 #include "./const.h"
 #include "./context.h"
 #include "./custom_error_handler.h"
@@ -88,6 +89,12 @@ bool_t toggl_set_settings_remind_times(
     return toggl::noError == app(context)->SetSettingsRemindTimes(
         to_string(remind_starts),
         to_string(remind_ends));
+}
+
+bool_t toggl_set_settings_render_timeline(
+    void *context,
+    const bool_t value) {
+    return toggl::noError == app(context)->SetSettingsRenderTimeline(value);
 }
 
 bool_t toggl_set_settings_use_idle_detection(
@@ -359,6 +366,7 @@ char_t *toggl_create_project(
     toggl::Project *p = app(context)->CreateProject(
         workspace_id,
         client_id,
+        "",
         to_string(project_name),
         is_private);
 
@@ -368,21 +376,34 @@ char_t *toggl_create_project(
     return nullptr;
 }
 
-bool_t toggl_create_client(
+char_t *toggl_create_client(
     void *context,
     const uint64_t workspace_id,
     const char_t *client_name) {
 
-    return toggl::noError == app(context)->CreateClient(
+    toggl::Client *c = app(context)->CreateClient(
         workspace_id,
         to_string(client_name));
+
+    if (!c) {
+        return nullptr;
+    }
+
+    poco_check_ptr(c);
+
+    logger().debug("Created client " + c->String());
+
+    poco_assert(!c->GUID().empty());
+
+    return copy_string(c->GUID());
 }
 
-bool_t toggl_add_project(
+char_t *toggl_add_project(
     void *context,
     const char_t *time_entry_guid,
     const uint64_t workspace_id,
     const uint64_t client_id,
+    const char_t *client_guid,
     const char_t *project_name,
     const bool_t is_private) {
 
@@ -391,23 +412,24 @@ bool_t toggl_add_project(
     toggl::Project *p = app(context)->CreateProject(
         workspace_id,
         client_id,
+        to_string(client_guid),
         to_string(project_name),
         is_private);
     if (!p) {
-        return false;
+        return nullptr;
     }
 
     poco_check_ptr(p);
 
     char_t *guid = copy_string(p->GUID());
-    bool_t res = toggl_set_time_entry_project(
+    toggl_set_time_entry_project(
         context,
         time_entry_guid,
         0, /* no task ID */
         p->ID(),
         guid);
-    free(guid);
-    return res;
+
+    return guid;
 }
 
 char_t *toggl_format_tracking_time_duration(
@@ -434,7 +456,8 @@ char_t *toggl_start(
     const char_t *duration,
     const uint64_t task_id,
     const uint64_t project_id,
-    const char_t *project_guid) {
+    const char_t *project_guid,
+    const char_t *tags) {
 
     logger().debug("toggl_start");
 
@@ -453,9 +476,18 @@ char_t *toggl_start(
         p_guid = to_string(project_guid);
     }
 
-    toggl::TimeEntry *te = app(context)->Start(desc, dur,
-                           task_id,
-                           project_id, p_guid);
+    std::string tag_list("");
+    if (tags) {
+        tag_list = to_string(tags);
+    }
+
+    toggl::TimeEntry *te = app(context)->Start(
+        desc,
+        dur,
+        task_id,
+        project_id,
+        p_guid,
+        tag_list);
     if (te) {
         return copy_string(te->GUID());
     }
@@ -724,6 +756,21 @@ bool_t toggl_timeline_is_recording_enabled(
     return app(context)->IsTimelineRecordingEnabled();
 }
 
+char_t *toggl_timeline_save_as_time_entry(
+    void *context,
+    const char_t *guid) {
+    std::string timeline_event_guid("");
+    if (guid) {
+        timeline_event_guid = to_string(guid);
+    }
+    toggl::TimeEntry *te =
+        app(context)->SaveTimelineAsTimeEntry(timeline_event_guid);
+    if (te) {
+        return copy_string(te->GUID());
+    }
+    return nullptr;
+}
+
 bool_t toggl_feedback_send(
     void *context,
     const char_t *topic,
@@ -748,7 +795,7 @@ bool_t toggl_set_update_channel(
     poco_check_ptr(update_channel);
 
     return toggl::noError == app(context)->
-           SaveUpdateChannel(to_string(update_channel));
+           SetUpdateChannel(to_string(update_channel));
 }
 
 char_t *toggl_get_update_channel(
@@ -999,6 +1046,14 @@ void toggl_set_idle_seconds(
     if (context) {
         app(context)->SetIdleSeconds(idle_seconds);
     }
+}
+
+bool_t toggl_set_promotion_response(
+    void *context,
+    const int64_t promotion_type,
+    const int64_t promotion_response) {
+    return toggl::noError == app(context)->SetPromotionResponse(
+        promotion_type, promotion_response);
 }
 
 char_t *toggl_run_script(

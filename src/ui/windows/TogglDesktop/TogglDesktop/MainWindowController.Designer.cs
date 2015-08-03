@@ -56,6 +56,7 @@ partial class MainWindowController
         this.contentPanel = new System.Windows.Forms.Panel();
         this.resizeHandle = new System.Windows.Forms.Label();
         this.errorToolTip = new System.Windows.Forms.ToolTip(this.components);
+        this.currentUserEmailMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.troubleBox.SuspendLayout();
         this.trayIconMenu.SuspendLayout();
         this.SuspendLayout();
@@ -104,6 +105,7 @@ partial class MainWindowController
         // trayIconMenu
         //
         this.trayIconMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.currentUserEmailMenuItem,
             this.runningToolStripMenuItem,
             this.toolStripMenuItem1,
             this.newToolStripMenuItem,
@@ -123,7 +125,7 @@ partial class MainWindowController
             this.quitToolStripMenuItem
         });
         this.trayIconMenu.Name = "trayIconMenu";
-        this.trayIconMenu.Size = new System.Drawing.Size(167, 314);
+        this.trayIconMenu.Size = new System.Drawing.Size(167, 358);
         //
         // runningToolStripMenuItem
         //
@@ -271,6 +273,13 @@ partial class MainWindowController
         //
         this.errorToolTip.BackColor = System.Drawing.SystemColors.HighlightText;
         //
+        // currentUserEmailMenuItem
+        //
+        this.currentUserEmailMenuItem.Enabled = false;
+        this.currentUserEmailMenuItem.Name = "currentUserEmailMenuItem";
+        this.currentUserEmailMenuItem.Size = new System.Drawing.Size(166, 22);
+        this.currentUserEmailMenuItem.Text = "email";
+        //
         // MainWindowController
         //
         this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -327,6 +336,7 @@ partial class MainWindowController
     private System.Windows.Forms.Panel contentPanel;
     private System.Windows.Forms.Label resizeHandle;
     private System.Windows.Forms.ToolTip errorToolTip;
+    private System.Windows.Forms.ToolStripMenuItem currentUserEmailMenuItem;
 }
 }
 

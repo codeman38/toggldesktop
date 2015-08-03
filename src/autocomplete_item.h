@@ -27,8 +27,10 @@ class AutocompleteItem {
     , ProjectColor("")
     , TaskID(0)
     , ProjectID(0)
+    , WorkspaceID(0)
     , Type(0)
-    , WorkspaceName("") {}
+    , WorkspaceName("")
+    , Tags("") {}
     ~AutocompleteItem() {}
 
     bool IsTimeEntry() const {
@@ -56,8 +58,10 @@ class AutocompleteItem {
            << " ProjectColor=" << ProjectColor
            << " TaskID=" << TaskID
            << " ProjectID=" << ProjectID
+           << " WorkspaceID=" << WorkspaceID
            << " Type=" << Type
-           << " WorkspaceName=" << WorkspaceName;
+           << " WorkspaceName=" << WorkspaceName
+           << " Tags=" << Tags;
         return ss.str();
     }
 
@@ -70,8 +74,10 @@ class AutocompleteItem {
     std::string ProjectColor;
     Poco::UInt64 TaskID;
     Poco::UInt64 ProjectID;
+    Poco::UInt64 WorkspaceID;
     Poco::UInt64 Type;
     std::string WorkspaceName;
+    std::string Tags;
 };
 
 }  // namespace toggl

@@ -19,6 +19,7 @@ class Project;
 class Tag;
 class Task;
 class TimeEntry;
+class TimelineEvent;
 class Workspace;
 
 template<typename T>
@@ -36,6 +37,7 @@ class RelatedData {
     std::vector<Tag *> Tags;
     std::vector<TimeEntry *> TimeEntries;
     std::vector<AutotrackerRule *> AutotrackerRules;
+    std::vector<TimelineEvent *> TimelineEvents;
 
     void Clear();
 
@@ -46,23 +48,22 @@ class RelatedData {
     Workspace *WorkspaceByID(const Poco::UInt64 id) const;
     TimeEntry *TimeEntryByID(const Poco::UInt64 id) const;
 
-    std::vector<std::string> TagList() const;
-    std::vector<Workspace *> WorkspaceList() const;
-    std::vector<Client *> ClientList() const;
+    void TagList(std::vector<std::string> *) const;
+    void WorkspaceList(std::vector<Workspace *> *) const;
+    void ClientList(std::vector<Client *> *) const;
 
     TimeEntry *TimeEntryByGUID(const guid GUID) const;
     Tag *TagByGUID(const guid GUID) const;
     Project *ProjectByGUID(const guid GUID) const;
     Client *ClientByGUID(const guid GUID) const;
+    TimelineEvent *TimelineEventByGUID(const guid GUID) const;
 
-    std::vector<AutocompleteItem> TimeEntryAutocompleteItems();
-
-    std::vector<AutocompleteItem> MinitimerAutocompleteItems();
-
-    std::vector<AutocompleteItem> ProjectAutocompleteItems();
+    void TimeEntryAutocompleteItems(std::vector<AutocompleteItem> *) const;
+    void MinitimerAutocompleteItems(std::vector<AutocompleteItem> *) const;
+    void ProjectAutocompleteItems(std::vector<AutocompleteItem> *) const;
 
     void ProjectLabelAndColorCode(
-        TimeEntry *te,
+        const TimeEntry *te,
         std::string *workspace_name,
         std::string *project_and_task_label,
         std::string *task_label,
@@ -73,22 +74,24 @@ class RelatedData {
  private:
     void timeEntryAutocompleteItems(
         std::set<std::string> *unique_names,
-        std::vector<AutocompleteItem> *list);
+        std::vector<AutocompleteItem> *list) const;
 
     void taskAutocompleteItems(
         std::set<std::string> *unique_names,
         std::map<Poco::UInt64, std::string> *ws_names,
-        std::vector<AutocompleteItem> *list);
+        std::vector<AutocompleteItem> *list) const;
 
     void projectAutocompleteItems(
         std::set<std::string> *unique_names,
         std::map<Poco::UInt64, std::string> *ws_names,
-        std::vector<AutocompleteItem> *list);
+        std::vector<AutocompleteItem> *list) const;
 
     void workspaceAutocompleteItems(
         std::set<std::string> *unique_names,
         std::map<Poco::UInt64, std::string> *ws_names,
-        std::vector<AutocompleteItem> *list);
+        std::vector<AutocompleteItem> *list) const;
+
+    Client *clientByProject(Project *p) const;
 };
 
 template<typename T>

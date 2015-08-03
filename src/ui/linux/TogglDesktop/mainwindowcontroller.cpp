@@ -34,6 +34,7 @@ MainWindowController::MainWindowController(
   togglApi(new TogglApi(0, logPathOverride, dbPathOverride)),
   tracking(false),
   loggedIn(false),
+  actionEmail(0),
   actionNew(0),
   actionContinue(0),
   actionStop(0),
@@ -66,6 +67,9 @@ MainWindowController::MainWindowController(
     centralWidget()->setLayout(verticalLayout);
 
     readSettings();
+
+    connect(QApplication::instance(), SIGNAL(showUp()),
+            this, SLOT(raise()));
 
     connect(TogglApi::instance, SIGNAL(displayApp(bool)),  // NOLINT
             this, SLOT(displayApp(bool)));  // NOLINT
@@ -182,6 +186,7 @@ void MainWindowController::enableMenuActions() {
     actionClear_Cache->setEnabled(loggedIn);
     actionSend_Feedback->setEnabled(loggedIn);
     actionReports->setEnabled(loggedIn);
+    actionEmail->setText(TogglApi::instance->userEmail());
     if (hasTrayIconCached) {
         if (tracking) {
             trayIcon->setIcon(icon);
@@ -206,7 +211,9 @@ void MainWindowController::connectMenuActions() {
 
 void MainWindowController::connectMenuAction(
     QAction *action) {
-    if ("actionNew" == action->objectName()) {
+    if ("actionEmail" == action->objectName()) {
+        actionEmail = action;
+    } else if ("actionNew" == action->objectName()) {
         actionNew = action;
         connect(action, SIGNAL(triggered()), this, SLOT(onActionNew()));
     } else if ("actionContinue" == action->objectName()) {
@@ -327,6 +334,12 @@ void MainWindowController::writeSettings() {
 }
 
 void MainWindowController::closeEvent(QCloseEvent *event) {
+    if (hasTrayIcon()) {
+        event->ignore();
+        hide();
+        return;
+    }
+
     QMessageBox::StandardButton dialog;
     dialog = QMessageBox::question(this,
                                    "Toggl Desktop",
@@ -344,6 +357,9 @@ void MainWindowController::closeEvent(QCloseEvent *event) {
 }
 
 bool MainWindowController::hasTrayIcon() const {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 5, 0))
+    return true;
+#endif
     QString currentDesktop = QProcessEnvironment::systemEnvironment().value(
         "XDG_CURRENT_DESKTOP", "");
     return "Unity" != currentDesktop;

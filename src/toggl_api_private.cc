@@ -9,6 +9,7 @@
 #include "./formatter.h"
 #include "./project.h"
 #include "./time_entry.h"
+#include "./timeline_event.h"
 #include "./workspace.h"
 
 #include "Poco/Logger.h"
@@ -24,11 +25,52 @@ TogglAutocompleteView *autocomplete_item_init(
     result->ProjectLabel = copy_string(item.ProjectLabel);
     result->ClientLabel = copy_string(item.ClientLabel);
     result->ProjectColor = copy_string(item.ProjectColor);
-    result->ProjectID = static_cast<unsigned int>(item.ProjectID);
     result->TaskID = static_cast<unsigned int>(item.TaskID);
+    result->ProjectID = static_cast<unsigned int>(item.ProjectID);
+    result->WorkspaceID = static_cast<unsigned int>(item.WorkspaceID);
     result->Type = static_cast<unsigned int>(item.Type);
+    result->Tags = copy_string(item.Tags);
     result->Next = nullptr;
     return result;
+}
+
+void autocomplete_item_clear(TogglAutocompleteView *item) {
+    if (!item) {
+        return;
+    }
+
+    free(item->Text);
+    item->Text = nullptr;
+
+    free(item->ProjectAndTaskLabel);
+    item->ProjectAndTaskLabel = nullptr;
+
+    free(item->TaskLabel);
+    item->TaskLabel = nullptr;
+
+    free(item->ProjectLabel);
+    item->ProjectLabel = nullptr;
+
+    free(item->ClientLabel);
+    item->ClientLabel = nullptr;
+
+    free(item->Description);
+    item->Description = nullptr;
+
+    free(item->ProjectColor);
+    item->ProjectColor = nullptr;
+
+    free(item->Tags);
+    item->Tags = nullptr;
+
+    if (item->Next) {
+        TogglAutocompleteView *next =
+            reinterpret_cast<TogglAutocompleteView *>(item->Next);
+        autocomplete_item_clear(next);
+        item->Next = nullptr;
+    }
+
+    delete item;
 }
 
 TogglGenericView *view_item_init() {
@@ -118,43 +160,10 @@ void view_item_clear(TogglGenericView *item) {
     delete item;
 }
 
-void autocomplete_item_clear(TogglAutocompleteView *item) {
-    if (!item) {
-        return;
-    }
-
-    free(item->Text);
-    item->Text = nullptr;
-
-    free(item->ProjectAndTaskLabel);
-    item->ProjectAndTaskLabel = nullptr;
-
-    free(item->TaskLabel);
-    item->TaskLabel = nullptr;
-
-    free(item->ProjectLabel);
-    item->ProjectLabel = nullptr;
-
-    free(item->ClientLabel);
-    item->ClientLabel = nullptr;
-
-    free(item->Description);
-    item->Description = nullptr;
-
-    free(item->ProjectColor);
-    item->ProjectColor = nullptr;
-
-    if (item->Next) {
-        TogglAutocompleteView *next =
-            reinterpret_cast<TogglAutocompleteView *>(item->Next);
-        autocomplete_item_clear(next);
-        item->Next = nullptr;
-    }
-
-    delete item;
-}
-
 std::string to_string(const char_t *s) {
+    if (!s) {
+        return std::string("");
+    }
 #if defined(_WIN32) || defined(WIN32)
     std::wstring ws(s);
     std::string res("");
@@ -184,7 +193,7 @@ int compare_string(const char_t *s1, const char_t *s2) {
 }
 
 TogglTimeEntryView *time_entry_view_item_init(
-    toggl::TimeEntry *te,
+    const toggl::TimeEntry *te,
     const std::string workspace_name,
     const std::string project_and_task_label,
     const std::string task_label,
@@ -239,8 +248,67 @@ TogglTimeEntryView *time_entry_view_item_init(
         view_item->Tags = copy_string(te->Tags().c_str());
     }
     view_item->UpdatedAt = static_cast<unsigned int>(te->UpdatedAt());
-    view_item->DateHeader = copy_string(te->DateHeaderString());
+    view_item->DateHeader =
+        copy_string(toggl::Formatter::FormatDateHeader(te->Start()));
     view_item->DurOnly = te->DurOnly();
+    view_item->IsHeader = false;
+
+    view_item->CanAddProjects = false;
+    view_item->CanSeeBillable = false;
+    view_item->DefaultWID = 0;
+
+    if (te->ValidationError() != toggl::noError) {
+        view_item->Error = copy_string(te->ValidationError());
+    } else {
+        view_item->Error = nullptr;
+    }
+
+    view_item->ViewType = te->Type();
+
+    view_item->Next = nullptr;
+
+    return view_item;
+}
+
+TogglTimeEntryView *time_entry_view_item_init(
+    const toggl::TimelineEvent *te,
+    const std::string date_duration,
+    const bool time_in_timer_format) {
+
+    poco_check_ptr(te);
+
+    TogglTimeEntryView *view_item = new TogglTimeEntryView();
+    poco_check_ptr(view_item);
+
+    view_item->DurationInSeconds = static_cast<int>(te->Duration());
+    view_item->Description = copy_string(te->Title());
+    view_item->GUID = copy_string(te->GUID());
+    if (time_in_timer_format) {
+        view_item->Duration =
+            toggl_format_tracking_time_duration(te->Duration());
+    } else {
+        view_item->Duration = copy_string(toggl::Formatter::FormatDuration(
+            te->Duration(), toggl::Formatter::DurationFormat));
+    }
+    view_item->Started = static_cast<unsigned int>(te->Start());
+    view_item->Ended = static_cast<unsigned int>(te->EndTime());
+
+    std::string start_time_string =
+        toggl::Formatter::FormatTimeForTimeEntryEditor(te->Start());
+    std::string end_time_string =
+        toggl::Formatter::FormatTimeForTimeEntryEditor(te->EndTime());
+
+    view_item->StartTimeString = copy_string(start_time_string);
+    view_item->EndTimeString = copy_string(end_time_string);
+
+    view_item->DateDuration = copy_string(date_duration);
+
+    view_item->Billable = false;
+    view_item->Tags = nullptr;
+    view_item->UpdatedAt = static_cast<unsigned int>(te->UpdatedAt());
+    view_item->DateHeader =
+        copy_string(toggl::Formatter::FormatDateHeader(te->Start()));
+    view_item->DurOnly = false;
     view_item->IsHeader = false;
 
     view_item->CanAddProjects = false;
@@ -342,6 +410,7 @@ TogglSettingsView *settings_view_item_init(
     view->AutodetectProxy = settings.autodetect_proxy;
     view->Autotrack = settings.autotrack;
     view->OpenEditorOnShortcut = settings.open_editor_on_shortcut;
+    view->RenderTimeline = settings.render_timeline;
 
     view->UseProxy = use_proxy;
 

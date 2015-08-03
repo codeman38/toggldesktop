@@ -10,7 +10,6 @@
 #include "Poco/Types.h"
 
 #include "./base_model.h"
-#include "./const.h"
 
 namespace toggl {
 
@@ -43,15 +42,10 @@ class Task : public BaseModel {
     }
     void SetActive(const bool value);
 
+    // Override BaseModel
     std::string String() const;
-
-    std::string ModelName() const {
-        return kModelTask;
-    }
-    std::string ModelURL() const {
-        return "/api/v8/tasks";
-    }
-
+    std::string ModelName() const;
+    std::string ModelURL() const;
     void LoadFromJSON(Json::Value value);
 
  private:

@@ -28,10 +28,11 @@ std::string Project::String() const {
     std::stringstream ss;
     ss  << "ID=" << ID()
         << " local_id=" << LocalID()
+        << " guid=" << GUID()
         << " name=" << name_
         << " wid=" << wid_
         << " cid=" << cid_
-        << " guid=" << GUID()
+        << " client_guid=" << client_guid_
         << " active=" << active_
         << " public=" << private_
         << " color=" << color_
@@ -126,7 +127,11 @@ Json::Value Project::SaveToJSON() const {
     n["name"] = Formatter::EscapeJSONString(Name());
     n["wid"] = Json::UInt64(WID());
     n["guid"] = GUID();
-    n["cid"] = Json::UInt64(CID());
+    if (!CID() && !ClientGUID().empty()) {
+        n["cid"] = ClientGUID();
+    } else {
+        n["cid"] = Json::UInt64(CID());
+    }
     n["billable"] = Billable();
     n["is_private"] = IsPrivate();
     n["ui_modified_at"] = Json::UInt64(UIModifiedAt());
@@ -169,6 +174,14 @@ bool Project::ResolveError(const toggl::error err) {
         return true;
     }
     return false;
+}
+
+std::string Project::ModelName() const {
+    return kModelProject;
+}
+
+std::string Project::ModelURL() const {
+    return "/api/v8/projects";
 }
 
 }   // namespace toggl

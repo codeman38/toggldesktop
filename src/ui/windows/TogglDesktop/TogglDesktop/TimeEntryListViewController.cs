@@ -1,13 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
+using System.Windows.Threading;
+using TogglDesktop.WPF;
 
 namespace TogglDesktop
 {
 public partial class TimeEntryListViewController : UserControl
 {
     private Object rendering = new Object();
+
+    private readonly Dictionary<string, WPF.TimeEntryCell> cellsByGUID =
+        new Dictionary<string, TimeEntryCell>();
+
+    public int TimerHeight {
+        get {
+            return this.entriesHost.Top;
+        }
+    }
 
     public TimeEntryListViewController()
     {
@@ -18,24 +30,23 @@ public partial class TimeEntryListViewController : UserControl
         Toggl.OnTimeEntryList += OnTimeEntryList;
         Toggl.OnLogin += OnLogin;
 
-        timerEditViewController.DescriptionTextBox.MouseWheel += TimeEntryListViewController_MouseWheel;
-        timerEditViewController.DurationTextBox.MouseWheel += TimeEntryListViewController_MouseWheel;
+        //timerEditViewController.DescriptionTextBox.MouseWheel += TimeEntryListViewController_MouseWheel;
+        //timerEditViewController.DurationTextBox.MouseWheel += TimeEntryListViewController_MouseWheel;
 
         entries.SetFocusCondition(() => timerEditViewController.CanFocusList());
-
     }
 
     void TimeEntryListViewController_MouseWheel(object sender, MouseEventArgs e)
     {
-        if (!timerEditViewController.isAutocompleteOpened())
-        {
-            entriesHost.Focus();
-        }
+        //if (!timerEditViewController.isAutocompleteOpened())
+        //{
+        //    entriesHost.Focus();
+        //}
     }
 
     public void SetAcceptButton(Form frm)
     {
-        timerEditViewController.SetAcceptButton(frm);
+        // TODO: replace concept of accept buttons (wpf does not have this)
     }
 
     void OnTimeEntryList(bool open, List<Toggl.TimeEntry> list)
@@ -63,6 +74,8 @@ public partial class TimeEntryListViewController : UserControl
     {
         emptyLabel.Visible = (list.Count == 0);
 
+        this.cellsByGUID.Clear();
+
         int maxCount = list.Count;
 
         for (int i = 0; i < maxCount; i++)
@@ -80,8 +93,8 @@ public partial class TimeEntryListViewController : UserControl
                 cell = new WPF.TimeEntryCell();
                 entries.Children.Add(cell);
             }
-
             cell.Display(te);
+            this.cellsByGUID.Add(te.GUID, cell);
         }
 
         if (entries.Children.Count > list.Count)
@@ -89,8 +102,10 @@ public partial class TimeEntryListViewController : UserControl
             entries.Children.RemoveRange(list.Count, entries.Children.Count - list.Count);
         }
 
+        entries.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
         entriesHost.Invalidate();
 
+        entries.RefreshHighLight();
     }
 
     void OnLogin(bool open, UInt64 user_id)
@@ -113,23 +128,36 @@ public partial class TimeEntryListViewController : UserControl
         Toggl.OpenInBrowser();
     }
 
-    internal WPF.TimeEntryCell findControlByGUID(string GUID)
+    public void SetEditPopup(WPF.TimeEntryEditViewController editView)
     {
-        return this.entries.Children
-               .Cast<WPF.TimeEntryCell>()
-               .FirstOrDefault(child => child.GUID == GUID);
-        if (timerEditViewController.durationFocused)
-        {
-            return this.entries.Children
-                   .Cast<WPF.TimeEntryCell>()
-                   .FirstOrDefault(child => child.GUID == GUID);
-        }
-        return null;
+        editView.SetTimer(this.timerEditViewController);
     }
 
-    internal void setEditPopup(EditForm editForm)
+    public void HighlightEntry(string GUID)
     {
-        timerEditViewController.editForm = editForm;
+        WPF.TimeEntryCell cell = null;
+        if(GUID != null)
+            this.cellsByGUID.TryGetValue(GUID, out cell);
+
+        this.entries.HighlightCell(cell);
     }
+
+    public void DisableHighlight()
+    {
+        this.entries.DisableHighlight();
+    }
+
+    public void SetListWidth(int width)
+    {
+        this.entriesHost.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Top;
+        this.entriesHost.Width = width;
+    }
+
+    public void DisableListWidth()
+    {
+        this.entriesHost.Width = this.Width;
+        this.entriesHost.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right;
+    }
+
 }
 }

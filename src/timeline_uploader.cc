@@ -7,6 +7,7 @@
 
 #include "./formatter.h"
 #include "./https_client.h"
+#include "./urls.h"
 
 #include "Poco/Foundation.h"
 #include "Poco/Thread.h"
@@ -93,12 +94,13 @@ error TimelineUploader::upload(TimelineBatch *batch) {
        << " event(s) of user " << batch->UserID();
     logger().debug(ss.str());
 
-    std::string json = convertTimelineToJSON(batch->Events(),
-                       batch->DesktopID());
+    std::string json = convertTimelineToJSON(
+        batch->Events(),
+        batch->DesktopID());
     logger().debug(json);
 
     std::string response_body("");
-    return client.Post(kTimelineUploadURL,
+    return client.Post(urls::TimelineUpload(),
                        "/api/v8/timeline",
                        json,
                        batch->APIToken(),
@@ -115,14 +117,9 @@ std::string convertTimelineToJSON(
     for (std::vector<TimelineEvent>::const_iterator i = timeline_events.begin();
             i != timeline_events.end();
             ++i) {
-        const TimelineEvent &event = *i;
-        Json::Value n;
-        n["filename"] = event.filename;
-        n["title"] = event.title;
-        n["start_time"] = Json::Int64(event.start_time);
-        n["end_time"] = Json::Int64(event.end_time);
+        TimelineEvent event = *i;
+        Json::Value n = event.SaveToJSON();
         n["desktop_id"] = desktop_id;
-        n["created_with"] = "timeline";
         root.append(n);
     }
 

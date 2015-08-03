@@ -14,7 +14,8 @@
 #include "./tag.h"
 #include "./task.h"
 #include "./time_entry.h"
-#include "./workspace.h"
+#include "./timeline_event.h"
+#include "./urls.h"
 
 #include "Poco/Base64Decoder.h"
 #include "Poco/Base64Encoder.h"
@@ -28,6 +29,8 @@
 #include "Poco/RandomStream.h"
 #include "Poco/SHA1Engine.h"
 #include "Poco/Stopwatch.h"
+#include "Poco/Timestamp.h"
+#include "Poco/Timespan.h"
 #include "Poco/UTF8String.h"
 
 namespace toggl {
@@ -39,16 +42,21 @@ User::~User() {
 Project *User::CreateProject(
     const Poco::UInt64 workspace_id,
     const Poco::UInt64 client_id,
+    const std::string client_guid,
     const std::string project_name,
     const bool is_private) {
+
     Project *p = new Project();
     p->SetWID(workspace_id);
     p->SetName(project_name);
     p->SetCID(client_id);
+    p->SetClientGUID(client_guid);
     p->SetUID(ID());
     p->SetActive(true);
     p->SetPrivate(is_private);
+
     related.Projects.push_back(p);
+
     return p;
 }
 
@@ -58,6 +66,7 @@ Client *User::CreateClient(
     Client *c = new Client();
     c->SetWID(workspace_id);
     c->SetName(client_name);
+    c->SetUID(ID());
     related.Clients.push_back(c);
     return c;
 }
@@ -69,7 +78,9 @@ TimeEntry *User::Start(
     const std::string duration,
     const Poco::UInt64 task_id,
     const Poco::UInt64 project_id,
-    const std::string project_guid) {
+    const std::string project_guid,
+    const std::string tags) {
+
     Stop();
 
     time_t now = time(0);
@@ -84,6 +95,7 @@ TimeEntry *User::Start(
     te->SetPID(project_id);
     te->SetProjectGUID(project_guid);
     te->SetTID(task_id);
+    te->SetTags(tags);
 
     if (!duration.empty()) {
         int seconds = Formatter::ParseDurationString(duration);
@@ -116,7 +128,7 @@ TimeEntry *User::Start(
         }
     }
 
-    ensureWID(te);
+    EnsureWID(te);
 
     te->SetDurOnly(!StoreStartAndStopTime());
     te->SetUIModified();
@@ -124,28 +136,6 @@ TimeEntry *User::Start(
     related.TimeEntries.push_back(te);
 
     return te;
-}
-
-template<typename T>
-void User::ensureWID(T *model) const {
-    // Do nothing if TE already has WID assigned
-    if (model->WID()) {
-        return;
-    }
-
-    // Try to set default user WID
-    if (DefaultWID()) {
-        model->SetWID(DefaultWID());
-        return;
-    }
-
-    // Try to set first WID available
-    std::vector<Workspace *>::const_iterator it =
-        related.Workspaces.begin();
-    if (it != related.Workspaces.end()) {
-        Workspace *ws = *it;
-        model->SetWID(ws->ID());
-    }
 }
 
 toggl::error User::Continue(
@@ -191,13 +181,13 @@ toggl::error User::Continue(
 
 std::string User::DateDuration(TimeEntry * const te) const {
     Poco::Int64 date_duration(0);
-    std::string date_header = te->DateHeaderString();
+    std::string date_header = Formatter::FormatDateHeader(te->Start());
     for (std::vector<TimeEntry *>::const_iterator it =
         related.TimeEntries.begin();
             it != related.TimeEntries.end();
             it++) {
         TimeEntry *n = *it;
-        if (n->DateHeaderString() == date_header) {
+        if (Formatter::FormatDateHeader(n->Start()) == date_header) {
             Poco::Int64 duration = n->DurationInSeconds();
             if (duration > 0) {
                 date_duration += duration;
@@ -307,15 +297,15 @@ void User::SetDefaultWID(const Poco::UInt64 value) {
 // Stop a time entry, mark it as dirty.
 // Note that there may be multiple TE-s running. If there are,
 // all of them are stopped (multi-tracking is not supported by Toggl).
-std::vector<TimeEntry *> User::Stop() {
-    std::vector<TimeEntry *> result;
+void User::Stop(std::vector<TimeEntry *> *stopped) {
     TimeEntry *te = RunningTimeEntry();
     while (te) {
-        result.push_back(te);
+        if (stopped) {
+            stopped->push_back(te);
+        }
         te->StopTracking();
         te = RunningTimeEntry();
     }
-    return result;
 }
 
 TimeEntry *User::DiscardTimeAt(
@@ -364,146 +354,27 @@ TimeEntry *User::RunningTimeEntry() const {
     return nullptr;
 }
 
-template<typename T>
-void User::CollectPushableModels(
-    const std::vector<T *> list,
-    std::vector<T *> *result,
-    std::map<std::string, BaseModel *> *models) const {
-
-    poco_check_ptr(result);
-
-    for (typename std::vector<T *>::const_iterator it =
-        list.begin();
-            it != list.end();
-            it++) {
-        T *model = *it;
-        if (!model->NeedsPush()) {
-            continue;
-        }
-        ensureWID(model);
-        model->EnsureGUID();
-        result->push_back(model);
-        if (models && !model->GUID().empty()) {
-            (*models)[model->GUID()] = model;
-        }
-    }
-}
-
-error User::PullAllUserData(
-    TogglClient *toggl_client) {
-
-    if (APIToken().empty()) {
-        return error("cannot pull user data without API token");
+bool User::HasValidSinceDate() const {
+    // has no value
+    if (!Since()) {
+        return false;
     }
 
-    try {
-        Poco::Stopwatch stopwatch;
-        stopwatch.start();
-
-        std::string user_data_json("");
-        error err = Me(
-            toggl_client,
-            APIToken(),
-            "api_token",
-            &user_data_json,
-            Since());
-        if (err != noError) {
-            return err;
-        }
-
-        LoadUserAndRelatedDataFromJSONString(user_data_json, !Since());
-
-        stopwatch.stop();
-        std::stringstream ss;
-        ss << "User with related data JSON fetched and parsed in "
-           << stopwatch.elapsed() / 1000 << " ms";
-        logger().debug(ss.str());
-    } catch(const Poco::Exception& exc) {
-        return exc.displayText();
-    } catch(const std::exception& ex) {
-        return ex.what();
-    } catch(const std::string& ex) {
-        return ex;
-    }
-    return noError;
-}
-
-error User::PushChanges(
-    TogglClient *toggl_client,
-    bool *had_something_to_push) {
-
-    if (APIToken().empty()) {
-        return error("cannot push changes without API token");
+    // too old
+    Poco::Timestamp ts = Poco::Timestamp::fromEpochTime(time(0))
+                         - (60 * Poco::Timespan::DAYS);
+    Poco::UInt64 min_allowed = ts.epochTime();
+    if (Since() < min_allowed) {
+        return false;
     }
 
-    poco_check_ptr(had_something_to_push);
-
-    *had_something_to_push = true;
-    try {
-        Poco::Stopwatch stopwatch;
-        stopwatch.start();
-
-        std::map<std::string, BaseModel *> models;
-
-        std::vector<TimeEntry *> time_entries;
-        std::vector<Project *> projects;
-        std::vector<Client *> clients;
-
-        CollectPushableModels(related.TimeEntries, &time_entries, &models);
-        CollectPushableModels(related.Projects, &projects, &models);
-        CollectPushableModels(related.Clients, &clients, &models);
-
-        if (time_entries.empty() && projects.empty() && clients.empty()) {
-            *had_something_to_push = false;
-            return noError;
-        }
-
-        std::string json("");
-        error err = updateJSON(&clients, &projects, &time_entries, &json);
-        if (err != noError) {
-            return err;
-        }
-
-        logger().debug(json);
-
-        std::string response_body("");
-        err = toggl_client->Post(kAPIURL,
-                                 "/api/v8/batch_updates",
-                                 json,
-                                 APIToken(),
-                                 "api_token",
-                                 &response_body);
-        if (err != noError) {
-            return err;
-        }
-
-        std::vector<BatchUpdateResult> results;
-        err = BatchUpdateResult::ParseResponseArray(response_body, &results);
-        if (err != noError) {
-            return err;
-        }
-
-        std::vector<error> errors;
-
-        BatchUpdateResult::ProcessResponseArray(&results, &models, &errors);
-
-        if (!errors.empty()) {
-            return Formatter::CollectErrors(&errors);
-        }
-
-        stopwatch.stop();
-        std::stringstream ss;
-        ss << "Changes data JSON pushed and responses parsed in "
-           << stopwatch.elapsed() / 1000 << " ms";
-        logger().debug(ss.str());
-    } catch(const Poco::Exception& exc) {
-        return exc.displayText();
-    } catch(const std::exception& ex) {
-        return ex.what();
-    } catch(const std::string& ex) {
-        return ex;
+    // too new
+    Poco::UInt64 now = time(0);
+    if (Since() > now) {
+        return false;
     }
-    return noError;
+
+    return true;
 }
 
 std::string User::String() const {
@@ -515,85 +386,6 @@ std::string User::String() const {
         << " since=" << since_
         << " record_timeline=" << record_timeline_;
     return ss.str();
-}
-
-error User::Me(
-    TogglClient *toggl_client,
-    const std::string email,
-    const std::string password,
-    std::string *user_data_json,
-    const Poco::UInt64 since) {
-
-    if (email.empty()) {
-        return "Empty email or API token";
-    }
-
-    if (password.empty()) {
-        return "Empty password";
-    }
-
-    try {
-        poco_check_ptr(user_data_json);
-        poco_check_ptr(toggl_client);
-
-        std::stringstream relative_url;
-        relative_url << "/api/v8/me"
-                     << "?app_name=" << TogglClient::Config.AppName
-                     << "&with_related_data=true"
-                     << "&since=" << since;
-
-        return toggl_client->Get(kAPIURL,
-                                 relative_url.str(),
-                                 email,
-                                 password,
-                                 user_data_json);
-    } catch(const Poco::Exception& exc) {
-        return exc.displayText();
-    } catch(const std::exception& ex) {
-        return ex.what();
-    } catch(const std::string& ex) {
-        return ex;
-    }
-}
-
-error User::Signup(
-    TogglClient *toggl_client,
-    const std::string email,
-    const std::string password,
-    std::string *user_data_json) {
-
-    if (email.empty()) {
-        return "Empty email";
-    }
-
-    if (password.empty()) {
-        return "Empty password";
-    }
-
-    try {
-        poco_check_ptr(user_data_json);
-        poco_check_ptr(toggl_client);
-
-        Json::Value user;
-        user["email"] = email;
-        user["password"] = password;
-
-        Json::Value root;
-        root["user"] = user;
-
-        return toggl_client->Post(kAPIURL,
-                                  "/api/v8/signups",
-                                  Json::StyledWriter().write(root),
-                                  "",
-                                  "",
-                                  user_data_json);
-    } catch(const Poco::Exception& exc) {
-        return exc.displayText();
-    } catch(const std::exception& ex) {
-        return ex.what();
-    } catch(const std::string& ex) {
-        return ex;
-    }
 }
 
 void User::DeleteRelatedModelsWithWorkspace(const Poco::UInt64 wid) {
@@ -1063,7 +855,7 @@ error User::LoginToken(
     return noError;
 }
 
-error User::updateJSON(
+error User::UpdateJSON(
     std::vector<Client *> * const clients,
     std::vector<Project *> * const projects,
     std::vector<TimeEntry *> * const time_entries,
@@ -1233,6 +1025,168 @@ error User::EnableOfflineLogin(
         return ex;
     }
     return noError;
+}
+
+bool User::CanSeeBillable(
+    const Workspace *ws) const {
+    if (!HasPremiumWorkspaces()) {
+        return false;
+    }
+    if (ws && !ws->Premium()) {
+        return false;
+    }
+    return true;
+}
+
+void User::MarkTimelineBatchAsUploaded(
+    const std::vector<TimelineEvent> &events) {
+
+    for (std::vector<TimelineEvent>::const_iterator i = events.begin();
+            i != events.end();
+            ++i) {
+        TimelineEvent event = *i;
+        TimelineEvent *uploaded = related.TimelineEventByGUID(event.GUID());
+        if (!uploaded) {
+            logger().error(
+                "Could not find timeline event to mark it as uploaded: "
+                + event.String());
+            continue;
+        }
+        uploaded->SetUploaded(true);
+    }
+}
+
+void User::CompressTimeline() {
+    // Group events by app name into chunks
+    std::map<std::string, TimelineEvent *> compressed;
+
+    // Older events will be deleted
+    Poco::UInt64 minimum_time = time(0) - kTimelineSecondsToKeep;
+
+    // Find the chunk start time of current time.
+    // then process only events that are older that this chunk start time.
+    // Else we will have no full chunks to compress.
+    Poco::UInt64 chunk_up_to =
+        (time(0) / kTimelineChunkSeconds) * kTimelineChunkSeconds;
+
+
+    time_t start = time(0);
+
+    {
+        std::stringstream ss;
+        ss << "CompressTimeline "
+           << " user_id=" << ID()
+           << " chunk_up_to=" << chunk_up_to
+           << " number of events=" << related.TimelineEvents.size();
+
+        logger().debug(ss.str());
+    }
+
+    for (std::vector<TimelineEvent *>::iterator i =
+        related.TimelineEvents.begin();
+            i != related.TimelineEvents.end();
+            ++i) {
+        TimelineEvent *event = *i;
+
+        poco_check_ptr(event);
+
+        // Delete too old timeline events
+        if (event->Start() < minimum_time) {
+            event->Delete();
+        }
+
+        // Events that do not fit into chunk yet, ignore
+        if (event->Start() >= chunk_up_to) {
+            continue;
+        }
+
+        // Ignore deleted events
+        if (event->DeletedAt()) {
+            continue;
+        }
+
+        // Ignore chunked and already uploaded stuff
+        if (event->Chunked() || event->Uploaded()) {
+            continue;
+        }
+
+        // Calculate the start time of the chunk
+        // that fits this timeline event
+        time_t chunk_start_time =
+            (event->Start() / kTimelineChunkSeconds)
+            * kTimelineChunkSeconds;
+
+        // Build dictionary key so that the chunk can be accessed later
+        std::stringstream ss;
+        ss << event->Filename();
+        ss << "::";
+        ss << event->Title();
+        ss << "::";
+        ss << event->Idle();
+        ss << "::";
+        ss << chunk_start_time;
+        std::string key = ss.str();
+
+        // Calculate positive value of timeline event duration
+        time_t duration = event->Duration();
+        if (duration < 0) {
+            duration = 0;
+        }
+
+        poco_assert(!event->Uploaded());
+        poco_assert(!event->Chunked());
+
+        TimelineEvent *chunk = nullptr;
+        if (compressed.find(key) == compressed.end()) {
+            // If chunk is not created yet,
+            // turn the timeline event into chunk
+            chunk = event;
+            chunk->SetEndTime(chunk->Start() + duration);
+            chunk->SetChunked(true);
+        } else {
+            // If chunk already exists, add duration
+            // to that junk and delete the original event
+            chunk = compressed[key];
+            chunk->SetEndTime(chunk->EndTime() + duration);
+            event->Delete();
+        }
+        compressed[key] = chunk;
+    }
+
+    {
+        std::stringstream ss;
+        ss << "CompressTimeline done in " << (time(0) - start)
+           << " seconds, "
+           << related.TimelineEvents.size()
+           << " compressed into "
+           << compressed.size()
+           << " chunks";
+        logger().debug(ss.str());
+    }
+}
+
+std::vector<TimelineEvent> User::CompressedTimeline() const {
+    std::vector<TimelineEvent> list;
+    for (std::vector<TimelineEvent *>::const_iterator i =
+        related.TimelineEvents.begin();
+            i != related.TimelineEvents.end();
+            ++i) {
+        TimelineEvent *event = *i;
+        poco_check_ptr(event);
+        if (event->VisibleToUser()) {
+            // Make a copy of the timeline event
+            list.push_back(*event);
+        }
+    }
+    return list;
+}
+
+std::string User::ModelName() const {
+    return kModelUser;
+}
+
+std::string User::ModelURL() const {
+    return "/api/v8/me";
 }
 
 template<class T>

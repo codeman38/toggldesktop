@@ -11,6 +11,7 @@
 #include "./../formatter.h"
 #include "./../project.h"
 #include "./../proxy.h"
+#include "./../settings.h"
 #include "./../tag.h"
 #include "./../task.h"
 #include "./../time_entry.h"
@@ -107,88 +108,128 @@ TEST(Project, ResolveOnlyAdminsCanChangeProjectVisibility) {
     ASSERT_TRUE(p.IsPrivate());
 }
 
-TEST(Database, CreateCompressedTimelineBatchForUpload) {
+TEST(User, CreateCompressedTimelineBatchForUpload) {
     testing::Database db;
 
-    const Poco::UInt64 user_id = 123;
+    User user;
+    ASSERT_EQ(noError,
+              user.LoadUserAndRelatedDataFromJSONString(loadTestData(), true));
+    Poco::UInt64 user_id = user.ID();
+
+    std::vector<ModelChange> changes;
+
+    Poco::UInt64 good_duration_seconds(30);
 
     // Event that happened at least 15 minutes ago,
     // can be uploaded to Toggl backend.
-    TimelineEvent good;
-    good.user_id = user_id;
-    good.start_time = time(0) - 60*16;  // started 16 minutes ago
-    good.end_time = good.start_time + 30;  // lasted 30 seconds
-    good.filename = "Notepad.exe";
-    good.title = "untitled";
-    ASSERT_EQ(noError, db.instance()->InsertTimelineEvent(&good));
+    TimelineEvent *good = new TimelineEvent();
+    good->SetUID(user_id);
+    // started yesterday, "16 minutes ago"
+    good->SetStart(time(0) - 86400 - 60*16);
+    good->SetEndTime(good->Start() + good_duration_seconds);
+    good->SetFilename("Notepad.exe");
+    good->SetTitle("untitled");
+    user.related.TimelineEvents.push_back(good);
+
+    Poco::UInt64 good2_duration_seconds(20);
 
     // Another event that happened at least 15 minutes ago,
     // can be uploaded to Toggl backend.
-    TimelineEvent good2;
-    good2.user_id = user_id;
-    good2.start_time = good.end_time + 1;  // started after first event
-    good2.end_time = good2.start_time + 20;
-    good2.filename = "Notepad.exe";
-    good2.title = "untitled";
-    ASSERT_EQ(noError, db.instance()->InsertTimelineEvent(&good2));
+    TimelineEvent *good2 = new TimelineEvent();
+    good2->SetUID(user_id);
+    good2->SetStart(good->EndTime() + 1);  // started after first event
+    good2->SetEndTime(good2->Start() + good2_duration_seconds);
+    good2->SetFilename("Notepad.exe");
+    good2->SetTitle("untitled");
+    user.related.TimelineEvents.push_back(good2);
 
     // Another event that happened at least 15 minutes ago,
     // but has already been uploaded to Toggl backend.
-    TimelineEvent uploaded;
-    uploaded.user_id = user_id;
-    uploaded.start_time = good2.end_time + 1;  // started after second event
-    uploaded.end_time = uploaded.start_time + 10;
-    uploaded.filename = "Notepad.exe";
-    uploaded.title = "untitled";
-    uploaded.uploaded = true;
-    ASSERT_EQ(noError, db.instance()->InsertTimelineEvent(&uploaded));
+    TimelineEvent *uploaded = new TimelineEvent();;
+    uploaded->SetUID(user_id);
+    uploaded->SetStart(good2->EndTime() + 1);  // started after second event
+    uploaded->SetEndTime(uploaded->Start() + 10);
+    uploaded->SetFilename("Notepad.exe");
+    uploaded->SetTitle("untitled");
+    uploaded->SetUploaded(true);
+    user.related.TimelineEvents.push_back(uploaded);
 
     // This event happened less than 15 minutes ago,
     // so it must not be uploaded
-    TimelineEvent too_fresh;
-    too_fresh.user_id = user_id;
-    too_fresh.start_time = time(0) - 60;  // started 1 minute ago
-    too_fresh.end_time = time(0);  // lasted until now
-    too_fresh.filename = "Notepad.exe";
-    too_fresh.title = "notes";
-    ASSERT_EQ(noError, db.instance()->InsertTimelineEvent(&too_fresh));
+    TimelineEvent *too_fresh = new TimelineEvent();
+    too_fresh->SetUID(user_id);
+    too_fresh->SetStart(time(0) - 60);  // started 1 minute ago
+    too_fresh->SetEndTime(time(0));  // lasted until now
+    too_fresh->SetFilename("Notepad.exe");
+    too_fresh->SetTitle("notes");
+    user.related.TimelineEvents.push_back(too_fresh);
 
     // This event happened more than 7 days ago,
     // so it must not be uploaded, just deleted
-    TimelineEvent too_old;
-    too_old.user_id = user_id;
-    too_old.start_time = time(0) - kTimelineSecondsToKeep - 1;  // 7 days ago
-    too_old.end_time = too_old.end_time + 120;  // lasted 2 minutes
-    too_old.filename = "Notepad.exe";
-    too_old.title = "diary";
-    ASSERT_EQ(noError, db.instance()->InsertTimelineEvent(&too_old));
+    TimelineEvent *too_old = new TimelineEvent();
+    too_old->SetUID(user_id);
+    too_old->SetStart(time(0) - kTimelineSecondsToKeep - 1);  // 7 days ago
+    too_old->SetEndTime(too_old->EndTime() + 120);  // lasted 2 minutes
+    too_old->SetFilename("Notepad.exe");
+    too_old->SetTitle("diary");
+    user.related.TimelineEvents.push_back(too_old);
 
-    std::vector<TimelineEvent> timeline_events;
-    ASSERT_EQ(noError, db.instance()->CreateCompressedTimelineBatchForUpload(
-        user_id, &timeline_events));
+    db.instance()->SaveUser(&user, true, &changes);
+
+    user.CompressTimeline();
+    std::vector<TimelineEvent> timeline_events = user.CompressedTimeline();
+
+    if (timeline_events.size() != 1) {
+        std::cerr << "user.related.TimelineEvents:" << std::endl;
+        for (std::vector<TimelineEvent *>::const_iterator it =
+            user.related.TimelineEvents.begin();
+                it != user.related.TimelineEvents.end(); it++) {
+            TimelineEvent *ev = *it;
+            std::cerr << ev->String() << std::endl;
+        }
+
+        std::cerr << "user.CompressedTimeline:" << std::endl;
+        for (std::vector<TimelineEvent>::const_iterator it =
+            timeline_events.begin();
+                it != timeline_events.end(); it++) {
+            TimelineEvent ev = *it;
+            std::cerr << ev.String() << std::endl;
+        }
+    }
+
+    ASSERT_EQ(size_t(1), timeline_events.size());
+
+    // Compress some more, for fun and profit
+    for (int i = 0; i < 100; i++) {
+        user.CompressTimeline();
+        timeline_events = user.CompressedTimeline();
+    }
 
     ASSERT_EQ(size_t(1), timeline_events.size());
 
     TimelineEvent ready_for_upload = timeline_events[0];
-    ASSERT_TRUE(ready_for_upload.chunked);
-    ASSERT_EQ(good.user_id, ready_for_upload.user_id);
-    ASSERT_EQ(good.start_time, ready_for_upload.start_time);
-    ASSERT_EQ(
-        (good.end_time - good.start_time) + (good2.end_time - good2.start_time),
-        ready_for_upload.end_time - ready_for_upload.start_time);
-    ASSERT_EQ(good.filename, ready_for_upload.filename);
-    ASSERT_EQ(good.title, ready_for_upload.title);
-    ASSERT_EQ(good.idle, ready_for_upload.idle);
-    ASSERT_FALSE(ready_for_upload.uploaded);
+    ASSERT_TRUE(ready_for_upload.Chunked());
+    ASSERT_EQ(good->UID(), ready_for_upload.UID());
+
+    ASSERT_NE(good2->Start(), ready_for_upload.Start());
+    ASSERT_NE(uploaded->Start(), ready_for_upload.Start());
+    ASSERT_NE(too_old->Start(), ready_for_upload.Start());
+    ASSERT_NE(too_fresh->Start(), ready_for_upload.Start());
+    ASSERT_EQ(good->Start(), ready_for_upload.Start());
+
+    ASSERT_EQ(static_cast<Poco::Int64>(
+        good_duration_seconds + good2_duration_seconds),
+              ready_for_upload.Duration());
+    ASSERT_EQ(good->Filename(), ready_for_upload.Filename());
+    ASSERT_EQ(good->Title(), ready_for_upload.Title());
+    ASSERT_EQ(good->Idle(), ready_for_upload.Idle());
+    ASSERT_FALSE(ready_for_upload.Uploaded());
 
     // Fake that we have uploaded the chunked timeline event now
-    ASSERT_EQ(noError,
-              db.instance()->MarkTimelineBatchAsUploaded(timeline_events));
+    user.MarkTimelineBatchAsUploaded(timeline_events);
 
     // Now, no more events should exist for upload
-    std::vector<TimelineEvent> left_for_upload;
-    ASSERT_EQ(noError, db.instance()->CreateCompressedTimelineBatchForUpload(
-        user_id, &left_for_upload));
+    std::vector<TimelineEvent> left_for_upload = user.CompressedTimeline();
     ASSERT_EQ(std::size_t(0), left_for_upload.size());
 }
 
@@ -233,6 +274,29 @@ Json::Value jsonStringToValue(const std::string json_string) {
     Json::Reader reader;
     reader.parse(json_string, root);
     return root;
+}
+
+TEST(User, Since) {
+    User u;
+
+    // no timestamp should be wrong
+    ASSERT_FALSE(u.HasValidSinceDate());
+
+    // 0 timestamp should be wrong
+    u.SetSince(0);
+    ASSERT_FALSE(u.HasValidSinceDate());
+
+    // current time should be ok
+    u.SetSince(time(0));
+    ASSERT_TRUE(u.HasValidSinceDate());
+
+    // future date should be wrong
+    u.SetSince(time(0) + 10);
+    ASSERT_FALSE(u.HasValidSinceDate());
+
+    // 1 month ago should be fine
+    u.SetSince(time(0) - 2.62974e6);
+    ASSERT_TRUE(u.HasValidSinceDate());
 }
 
 TEST(User, UpdatesTimeEntryFromJSON) {
@@ -541,7 +605,7 @@ TEST(User, TestStartTimeEntryWithDuration) {
 
     size_t count = user.related.TimeEntries.size();
 
-    user.Start("Old work", "1 hour", 0, 0, "");
+    user.Start("Old work", "1 hour", 0, 0, "", "");
 
     ASSERT_EQ(count + 1, user.related.TimeEntries.size());
 
@@ -557,7 +621,7 @@ TEST(User, TestStartTimeEntryWithoutDuration) {
     ASSERT_EQ(noError,
               user.LoadUserAndRelatedDataFromJSONString(loadTestData(), true));
 
-    user.Start("Old work", "", 0, 0, "");
+    user.Start("Old work", "", 0, 0, "", "");
 
     TimeEntry *te = user.RunningTimeEntry();
     ASSERT_TRUE(te);
@@ -572,7 +636,7 @@ TEST(User, TestDeletionSteps) {
               user.LoadUserAndRelatedDataFromJSONString(loadTestData(), true));
 
     // first, mark time entry as deleted
-    user.Start("My new time entry", "", 0, 0, "");
+    user.Start("My new time entry", "", 0, 0, "", "");
     TimeEntry *te = user.RunningTimeEntry();
     ASSERT_TRUE(te);
     std::vector<ModelChange> changes;
@@ -1472,11 +1536,11 @@ TEST(JSON, ConvertTimelineToJSON) {
     const std::string desktop_id("12345");
 
     TimelineEvent event;
-    event.start_time = time(0) - 10;
-    event.end_time = time(0);
-    event.filename = "Is this the real life?";
-    event.title = "Is this just fantasy?";
-    event.idle = true;
+    event.SetStart(time(0) - 10);
+    event.SetEndTime(time(0));
+    event.SetFilename("Is this the real life?");
+    event.SetTitle("Is this just fantasy?");
+    event.SetIdle(true);
     {
         std::vector<TimelineEvent> list;
         list.push_back(event);
@@ -1491,11 +1555,11 @@ TEST(JSON, ConvertTimelineToJSON) {
         const Json::Value v = root[0];
         ASSERT_EQ("timeline", v["created_with"].asString());
         ASSERT_EQ(desktop_id, v["desktop_id"].asString());
-        ASSERT_EQ(event.start_time, v["start_time"].asInt());
-        ASSERT_EQ(event.end_time, v["end_time"].asInt());
+        ASSERT_EQ(event.Start(), v["start_time"].asUInt());
+        ASSERT_EQ(event.EndTime(), v["end_time"].asUInt());
     }
 
-    event.idle = false;
+    event.SetIdle(false);
     {
         std::vector<TimelineEvent> list;
         list.push_back(event);
@@ -1510,13 +1574,13 @@ TEST(JSON, ConvertTimelineToJSON) {
         const Json::Value v = root[0];
         ASSERT_EQ("timeline", v["created_with"].asString());
         ASSERT_EQ(desktop_id, v["desktop_id"].asString());
-        ASSERT_EQ(event.start_time, v["start_time"].asInt());
-        ASSERT_EQ(event.end_time, v["end_time"].asInt());
-        ASSERT_EQ(event.filename, v["filename"].asString());
-        ASSERT_EQ(event.title, v["title"].asString());
+        ASSERT_EQ(event.Start(), v["start_time"].asUInt());
+        ASSERT_EQ(event.EndTime(), v["end_time"].asUInt());
+        ASSERT_EQ(event.Filename(), v["filename"].asString());
+        ASSERT_EQ(event.Title(), v["title"].asString());
     }
 
-    event.title = "Õhtu jõuab, päev veereb {\"\b\t";
+    event.SetTitle("Õhtu jõuab, päev veereb {\"\b\t");
     {
         std::vector<TimelineEvent> list;
         list.push_back(event);
@@ -1529,7 +1593,7 @@ TEST(JSON, ConvertTimelineToJSON) {
         ASSERT_EQ(std::size_t(1), root.size());
 
         const Json::Value v = root[0];
-        ASSERT_EQ(event.title, v["title"].asString());
+        ASSERT_EQ(event.Title(), v["title"].asString());
     }
 }
 
@@ -1799,6 +1863,24 @@ TEST(AutotrackerRule, Matches) {
 
     ev.SetTitle("dork");
     ASSERT_FALSE(a.Matches(ev));
+}
+
+TEST(Settings, IsSame) {
+    Settings s1;
+    Settings s2;
+
+    ASSERT_TRUE(s1.IsSame(s2));
+    ASSERT_TRUE(s2.IsSame(s1));
+
+    s1.use_idle_detection = true;
+    ASSERT_FALSE(s1.IsSame(s2));
+    ASSERT_FALSE(s2.IsSame(s1));
+
+    Settings s3 = s1;
+    ASSERT_TRUE(s3.IsSame(s1));
+    ASSERT_TRUE(s1.IsSame(s3));
+    ASSERT_FALSE(s3.IsSame(s2));
+    ASSERT_FALSE(s2.IsSame(s3));
 }
 
 }  // namespace toggl

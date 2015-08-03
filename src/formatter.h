@@ -24,8 +24,17 @@ class Format {
 class Client;
 class Project;
 class Task;
-class TimeEntry;
 class Workspace;
+
+class TimedEvent {
+ public:
+    TimedEvent() {}
+    virtual ~TimedEvent() {}
+
+    virtual const Poco::UInt64 &Start() const = 0;
+    virtual Poco::UInt64 Type() const = 0;
+    virtual Poco::Int64 Duration() const = 0;
+};
 
 class Formatter {
  public:
@@ -61,6 +70,10 @@ class Formatter {
 
     static error CollectErrors(
         std::vector<error> * const errors);
+
+    // Time
+
+    static Poco::UInt64 AbsDuration(const Poco::Int64 value);
 
     // Parse
 
@@ -119,7 +132,7 @@ class Formatter {
 };
 
 bool CompareClientByName(Client *a, Client *b);
-bool CompareTimeEntriesByStart(TimeEntry *a, TimeEntry *b);
+bool CompareByStart(TimedEvent *a, TimedEvent *b);
 bool CompareAutocompleteItems(AutocompleteItem a, AutocompleteItem b);
 bool CompareStructuredAutocompleteItems(
     AutocompleteItem a, AutocompleteItem b);

@@ -10,6 +10,8 @@
 #include "./const.h"
 #include "./formatter.h"
 #include "./netconf.h"
+#include "./urls.h"
+#include "./toggl_api.h"
 
 #include "Poco/DeflatingStream.h"
 #include "Poco/Environment.h"
@@ -100,7 +102,7 @@ void ServerStatus::runActivity() {
         HTTPSClient client;
         std::string response;
         error err = client.Get(
-            kAPIURL, "/api/v8/status", "", "", &response);
+            urls::API(), "/api/v8/status", "", "", &response);
         if (noError != err) {
             logger().error(err);
 
@@ -262,6 +264,14 @@ error HTTPSClient::request(
     std::string *response_body,
     Poco::Int64 *status_code,
     Poco::Net::HTMLForm *form) {
+
+    if (!urls::RequestsAllowed()) {
+        return error(kCannotSyncInTestEnv);
+    }
+
+    if (urls::ImATeapot()) {
+        return error(kUnsupportedAppError);
+    }
 
     std::map<std::string, Poco::Timestamp>::const_iterator cit =
         banned_until_.find(host);

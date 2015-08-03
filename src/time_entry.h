@@ -7,14 +7,15 @@
 #include <vector>
 
 #include "./base_model.h"
-#include "./const.h"
+#include "./formatter.h"
 #include "./types.h"
+#include "./toggl_api.h"
 
 #include "Poco/Types.h"
 
 namespace toggl {
 
-class TimeEntry : public BaseModel {
+class TimeEntry : public BaseModel, public TimedEvent {
  public:
     TimeEntry()
         : BaseModel()
@@ -80,8 +81,6 @@ class TimeEntry : public BaseModel {
     }
     void SetStart(const Poco::UInt64 value);
 
-    std::string DateHeaderString() const;
-
     std::string StopString() const;
     void SetStopString(const std::string value);
 
@@ -97,24 +96,12 @@ class TimeEntry : public BaseModel {
 
     void DiscardAt(const Poco::UInt64);
 
-    std::string String() const;
-
     bool IsToday() const;
 
     const std::string &ProjectGUID() const {
         return project_guid_;
     }
     void SetProjectGUID(const std::string);
-
-    std::string ModelName() const {
-        return kModelTimeEntry;
-    }
-    std::string ModelURL() const {
-        return "/api/v8/time_entries";
-    }
-
-    void LoadFromJSON(Json::Value value);
-    Json::Value SaveToJSON() const;
 
     // User-triggered changes to timer:
     void SetDurationUserInput(const std::string);
@@ -127,9 +114,24 @@ class TimeEntry : public BaseModel {
 
     void StopTracking();
 
-    virtual bool ResolveError(const error err);
+    // Override BaseModel
 
-    static Poco::UInt64 AbsDuration(const Poco::Int64 value);
+    std::string ModelName() const;
+    std::string ModelURL() const;
+    std::string String() const;
+    virtual bool ResolveError(const error err);
+    void LoadFromJSON(Json::Value value);
+    Json::Value SaveToJSON() const;
+
+    // Implement TimedEvent
+
+    virtual Poco::UInt64 Type() const {
+        return kTimedEventTypeTimeEntry;
+    }
+
+    virtual Poco::Int64 Duration() const {
+        return DurationInSeconds();
+    }
 
  private:
     Poco::UInt64 wid_;

@@ -8,11 +8,8 @@
 #include "Poco/Task.h"
 #include "Poco/TaskManager.h"
 
-#include "./types.h"
-
 namespace toggl {
 
-class User;
 class Settings;
 
 class Analytics : public Poco::TaskManager {

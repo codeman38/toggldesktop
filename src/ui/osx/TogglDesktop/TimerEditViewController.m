@@ -85,7 +85,7 @@ NSString *kInactiveTimerColor = @"#999999";
 
 	[self.autocompleteDataSource setFilter:@""];
 	NSFont *descriptionFont = [NSFont fontWithName:@"Lucida Grande" size:13.0];
-	NSFont *durationFont = [NSFont fontWithName:@"Lucida Grande" size:16.0];
+	NSFont *durationFont = [NSFont fontWithName:@"Lucida Grande" size:14.0];
 	NSColor *color = [ConvertHexColor hexCodeToNSColor:kTrackingColor];
 	NSDictionary *descriptionDictionary = @{
 		NSFontAttributeName : descriptionFont,
@@ -197,6 +197,19 @@ NSString *kInactiveTimerColor = @"#999999";
 		[self.descriptionLabel setTextColor:[ConvertHexColor hexCodeToNSColor:kTrackingColor]];
 
 		[self.durationTextField setTextColor:[ConvertHexColor hexCodeToNSColor:kTrackingColor]];
+		[self.billableFlag setHidden:!self.time_entry.billable];
+
+		// Time entry tags icon
+		if ([self.time_entry.tags count])
+		{
+			[self.tagFlag setHidden:NO];
+			self.tagFlag.toolTip = [self.time_entry.tags componentsJoinedByString:@", "];
+		}
+		else
+		{
+			[self.tagFlag setHidden:YES];
+			self.tagFlag.toolTip = nil;
+		}
 	}
 	else
 	{
@@ -208,6 +221,8 @@ NSString *kInactiveTimerColor = @"#999999";
 		[self.descriptionLabel setTextColor:[ConvertHexColor hexCodeToNSColor:kInactiveTimerColor]];
 
 		[self.durationTextField setTextColor:[ConvertHexColor hexCodeToNSColor:kInactiveTimerColor]];
+		[self.tagFlag setHidden:YES];
+		[self.billableFlag setHidden:YES];
 	}
 
 	[self checkProjectConstraints];
@@ -425,6 +440,7 @@ NSString *kInactiveTimerColor = @"#999999";
 
 	// User has selected a autocomplete item.
 	// It could be a time entry, a task or a project.
+	self.time_entry.WorkspaceID = item.WorkspaceID;
 	self.time_entry.ProjectID = item.ProjectID;
 	self.time_entry.TaskID = item.TaskID;
 	self.time_entry.ProjectAndTaskLabel = item.ProjectAndTaskLabel;
@@ -433,6 +449,7 @@ NSString *kInactiveTimerColor = @"#999999";
 	self.time_entry.ClientLabel = item.ClientLabel;
 	self.time_entry.ProjectColor = item.ProjectColor;
 	self.time_entry.Description = item.Description;
+	self.time_entry.tags = [[NSMutableArray alloc] initWithArray:item.tags copyItems:YES];
 
 	self.descriptionComboBox.stringValue = self.time_entry.Description;
 	if (item.ProjectID)
@@ -499,12 +516,14 @@ NSString *kInactiveTimerColor = @"#999999";
 
 - (void)addButtonClicked
 {
+	const char *tag_list = [[self.time_entry.tags componentsJoinedByString:@"\t"] UTF8String];
 	char *guid = toggl_start(ctx,
 							 [self.descriptionComboBox.stringValue UTF8String],
 							 "0",
 							 self.time_entry.TaskID,
 							 self.time_entry.ProjectID,
-							 0);
+							 0,
+							 tag_list);
 
 	[self clear];
 	self.time_entry = [[TimeEntryViewItem alloc] init];

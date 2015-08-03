@@ -8,7 +8,13 @@
 
 #include "./const.h"
 #include "./error.h"
+#include "./formatter.h"
 #include "./project.h"
+#include "./related_data.h"
+#include "./time_entry.h"
+#include "./user.h"
+#include "./workspace.h"
+
 #include "./toggl_api_private.h"
 
 #include "Poco/Logger.h"
@@ -228,17 +234,95 @@ void GUI::DisplayProjectAutocomplete(
 }
 
 void GUI::DisplayTimeEntryList(const bool open,
-                               TogglTimeEntryView* first) {
+                               const RelatedData &related,
+                               const std::vector<TimedEvent *> list) {
     Poco::Stopwatch stopwatch;
     stopwatch.start();
     {
         std::stringstream ss;
-        bool has_items = first ? true : false;
         ss << "DisplayTimeEntryList open=" << open
-           << ", has items=" << has_items;
+           << ", has items=" << list.size();
         logger().debug(ss.str());
     }
+
+    // Calculate total duration for each date: will be displayed in date header
+    std::map<std::string, Poco::Int64> date_durations;
+    for (unsigned int i = 0; i < list.size(); i++) {
+        TimedEvent *te = list.at(i);
+        if (te->Type() != kTimedEventTypeTimeEntry) {
+            continue;
+        }
+        std::string date_header = Formatter::FormatDateHeader(te->Start());
+        Poco::Int64 duration = date_durations[date_header];
+        duration += Formatter::AbsDuration(te->Duration());
+        date_durations[date_header] = duration;
+    }
+
+    // Render
+    TogglTimeEntryView *first = nullptr;
+    for (unsigned int i = 0; i < list.size(); i++) {
+        TimedEvent *te = list.at(i);
+
+        if (te->Duration() < 0) {
+            // Don't display running entries
+            continue;
+        }
+
+        Poco::Int64 duration =
+            date_durations[Formatter::FormatDateHeader(te->Start())];
+        std::string date_duration =
+            Formatter::FormatDurationForDateHeader(duration);
+
+        TogglTimeEntryView *item = nullptr;
+
+        if (te->Type() == kTimedEventTypeTimeEntry) {
+            TimeEntry *time_entry = static_cast<TimeEntry *>(te);
+            std::string workspace_name("");
+            std::string project_and_task_label("");
+            std::string task_label("");
+            std::string project_label("");
+            std::string client_label("");
+            std::string color("");
+            related.ProjectLabelAndColorCode(time_entry,
+                                             &workspace_name,
+                                             &project_and_task_label,
+                                             &task_label,
+                                             &project_label,
+                                             &client_label,
+                                             &color);
+
+            item = time_entry_view_item_init(time_entry,
+                                             workspace_name,
+                                             project_and_task_label,
+                                             task_label,
+                                             project_label,
+                                             client_label,
+                                             color,
+                                             date_duration,
+                                             false);
+        } else if (te->Type() == kTimedEventTypeTimelineEvent) {
+            TimelineEvent *timeline_event = static_cast<TimelineEvent *>(te);
+            item = time_entry_view_item_init(timeline_event,
+                                             date_duration,
+                                             false);
+        } else {
+            poco_assert(false);
+        }
+        item->Next = first;
+        if (first && compare_string(item->DateHeader, first->DateHeader) != 0) {
+            first->IsHeader = true;
+        }
+        first = item;
+    }
+
+    if (first) {
+        first->IsHeader = true;
+    }
+
     on_display_time_entry_list_(open, first);
+
+    time_entry_view_item_clear(first);
+
     stopwatch.stop();
     {
         std::stringstream ss;
@@ -263,20 +347,53 @@ void GUI::DisplayTags(std::vector<std::string> *tags) {
     view_item_clear(first);
 }
 
-void GUI::DisplayAutotrackerRules(TogglAutotrackerRuleView *first,
-                                  const std::vector<std::string> &titles) {
-    if (on_display_autotracker_rules_) {
-        uint64_t title_count = titles.size();
-        char_t **title_list = new char_t *[title_count];
-        for (uint64_t i = 0; i < title_count; i++) {
-            title_list[i] = copy_string(titles[i]);
-        }
-        on_display_autotracker_rules_(first, title_count, title_list);
-        for (uint64_t i = 0; i < title_count; i++) {
-            free(title_list[i]);
-        }
-        delete[] title_list;
+void GUI::DisplayAutotrackerRules(
+    const RelatedData &related,
+    const std::set<std::string> &autotracker_titles) {
+
+    if (!on_display_autotracker_rules_) {
+        return;
     }
+
+    // FIXME: dont re-render if cached items (models or view) are the same
+    TogglAutotrackerRuleView *first = nullptr;
+    for (std::vector<toggl::AutotrackerRule *>::const_iterator it =
+        related.AutotrackerRules.begin();
+            it != related.AutotrackerRules.end();
+            it++) {
+        AutotrackerRule *rule = *it;
+        Project *p = related.ProjectByID(rule->PID());
+        std::string project_name("");
+        if (p) {
+            project_name = p->Name();
+        }
+        TogglAutotrackerRuleView *item =
+            autotracker_rule_to_view_item(*it, project_name);
+        item->Next = first;
+        first = item;
+    }
+
+    std::vector<std::string> titles;
+    for (std::set<std::string>::const_iterator
+            it = autotracker_titles.begin();
+            it != autotracker_titles.end();
+            ++it) {
+        titles.push_back(*it);
+    }
+    std::sort(titles.begin(), titles.end(), CompareAutotrackerTitles);
+
+    uint64_t title_count = titles.size();
+    char_t **title_list = new char_t *[title_count];
+    for (uint64_t i = 0; i < title_count; i++) {
+        title_list[i] = copy_string(titles[i]);
+    }
+    on_display_autotracker_rules_(first, title_count, title_list);
+    for (uint64_t i = 0; i < title_count; i++) {
+        free(title_list[i]);
+    }
+    delete[] title_list;
+
+    autotracker_view_item_clear(first);
 }
 
 void GUI::DisplayClientSelect(std::vector<toggl::Client *> *clients) {
@@ -307,13 +424,37 @@ void GUI::DisplayWorkspaceSelect(std::vector<toggl::Workspace *> *list) {
     view_item_clear(first);
 }
 
-void GUI::DisplayTimeEntryEditor(const bool open,
-                                 TogglTimeEntryView *te,
-                                 const std::string focused_field_name) {
+void GUI::DisplayTimeEntryEditor(
+    const bool open,
+    const RelatedData &related,
+    const TimeEntry *te,
+    const std::string focused_field_name,
+    const Poco::Int64 total_duration_for_date,
+    const User *user) {
+
     logger().debug("DisplayTimeEntryEditor");
+
+    TogglTimeEntryView *view =
+        timeEntryViewItem(related, te, total_duration_for_date);
+
+    Workspace *ws = nullptr;
+    if (te->WID()) {
+        ws = related.WorkspaceByID(te->WID());
+    }
+    view->CanSeeBillable = user->CanSeeBillable(ws);
+    view->DefaultWID = user->DefaultWID();
+    if (ws) {
+        view->CanAddProjects = ws->Admin() ||
+                               !ws->OnlyAdminsMayCreateProjects();
+    } else {
+        view->CanAddProjects = user->CanAddProjects();
+    }
+
     char_t *field_s = copy_string(focused_field_name);
-    on_display_time_entry_editor_(open, te, field_s);
+    on_display_time_entry_editor_(open, view, field_s);
     free(field_s);
+
+    time_entry_view_item_clear(view);
 }
 
 void GUI::DisplayURL(const std::string URL) {
@@ -350,9 +491,17 @@ void GUI::DisplaySettings(const bool open,
     settings_view_item_clear(view);
 }
 
-void GUI::DisplayTimerState(TogglTimeEntryView *te) {
+void GUI::DisplayTimerState(
+    const RelatedData &related,
+    const TimeEntry *te,
+    const Poco::Int64 total_duration_for_date) {
+
+    TogglTimeEntryView *view =
+        timeEntryViewItem(related, te, total_duration_for_date);
+    on_display_timer_state_(view);
+    time_entry_view_item_clear(view);
+
     logger().debug("DisplayTimerState");
-    on_display_timer_state_(te);
 }
 
 void GUI::DisplayIdleNotification(const std::string guid,
@@ -377,6 +526,44 @@ void GUI::DisplayIdleNotification(const std::string guid,
 
 Poco::Logger &GUI::logger() const {
     return Poco::Logger::get("ui");
+}
+
+TogglTimeEntryView *timeEntryViewItem(
+    const RelatedData &related,
+    const TimeEntry *te,
+    const Poco::Int64 total_duration_for_date) {
+
+    if (!te) {
+        return nullptr;
+    }
+
+    std::string workspace_name("");
+    std::string project_and_task_label("");
+    std::string task_label("");
+    std::string project_label("");
+    std::string client_label("");
+    std::string color("");
+    related.ProjectLabelAndColorCode(te,
+                                     &workspace_name,
+                                     &project_and_task_label,
+                                     &task_label,
+                                     &project_label,
+                                     &client_label,
+                                     &color);
+
+    std::string date_duration =
+        Formatter::FormatDurationForDateHeader(
+            total_duration_for_date);
+
+    return time_entry_view_item_init(te,
+                                     workspace_name,
+                                     project_and_task_label,
+                                     task_label,
+                                     project_label,
+                                     client_label,
+                                     color,
+                                     date_duration,
+                                     true);
 }
 
 }  // namespace toggl

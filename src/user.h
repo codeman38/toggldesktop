@@ -14,12 +14,11 @@
 #include "./batch_update_result.h"
 #include "./related_data.h"
 #include "./types.h"
+#include "./workspace.h"
 
 #include "Poco/Types.h"
 
 namespace toggl {
-
-class TogglClient;
 
 class User : public BaseModel {
  public:
@@ -40,24 +39,13 @@ class User : public BaseModel {
     error EnableOfflineLogin(
         const std::string password);
 
-    error PullAllUserData(TogglClient *https_client);
-    error PullChanges(TogglClient *https_client);
-    error PushChanges(
-        TogglClient *https_client,
-        bool *had_something_to_push);
-
-    std::string String() const;
-
     bool HasPremiumWorkspaces() const;
     bool CanAddProjects() const;
 
-    void SetLastTEDate(const std::string value);
+    bool CanSeeBillable(
+        const Workspace *ws) const;
 
-    template<typename T>
-    void CollectPushableModels(
-        const std::vector<T *> list,
-        std::vector<T *> *result,
-        std::map<std::string, BaseModel *> *models = nullptr) const;
+    void SetLastTEDate(const std::string value);
 
     TimeEntry *RunningTimeEntry() const;
     bool IsTracking() const {
@@ -69,12 +57,13 @@ class User : public BaseModel {
         const std::string duration,
         const Poco::UInt64 task_id,
         const Poco::UInt64 project_id,
-        const std::string project_guid);
+        const std::string project_guid,
+        const std::string tags);
 
     toggl::error Continue(
         const std::string GUID);
 
-    std::vector<TimeEntry *> Stop();
+    void Stop(std::vector<TimeEntry *> *stopped = nullptr);
 
     // Discard time. Return a new time entry if
     // the discarded time was split into a new time entry
@@ -86,6 +75,7 @@ class User : public BaseModel {
     Project *CreateProject(
         const Poco::UInt64 workspace_id,
         const Poco::UInt64 client_id,
+        const std::string client_guid,
         const std::string project_name,
         const bool is_private);
 
@@ -110,6 +100,8 @@ class User : public BaseModel {
         return since_;
     }
     void SetSince(const Poco::UInt64 value);
+
+    bool HasValidSinceDate() const;
 
     const std::string &Fullname() const {
         return fullname_;
@@ -148,12 +140,10 @@ class User : public BaseModel {
 
     RelatedData related;
 
-    std::string ModelName() const {
-        return "user";
-    }
-    std::string ModelURL() const {
-        return "/api/v8/me";
-    }
+    // Override BaseModel
+    std::string String() const;
+    std::string ModelName() const;
+    std::string ModelURL() const;
 
     // Handle related model deletions
     void DeleteRelatedModelsWithWorkspace(const Poco::UInt64 wid);
@@ -169,6 +159,39 @@ class User : public BaseModel {
 
     error SetAPITokenFromOfflineData(const std::string password);
 
+    void MarkTimelineBatchAsUploaded(
+        const std::vector<TimelineEvent> &events);
+    void CompressTimeline();
+    std::vector<TimelineEvent> CompressedTimeline() const;
+
+    error UpdateJSON(
+        std::vector<Client *> * const,
+        std::vector<Project *> * const,
+        std::vector<TimeEntry *> * const,
+        std::string *result) const;
+
+    template<typename T>
+    void EnsureWID(T *model) const {
+        // Do nothing if TE already has WID assigned
+        if (model->WID()) {
+            return;
+        }
+
+        // Try to set default user WID
+        if (DefaultWID()) {
+            model->SetWID(DefaultWID());
+            return;
+        }
+
+        // Try to set first WID available
+        std::vector<Workspace *>::const_iterator it =
+            related.Workspaces.begin();
+        if (it != related.Workspaces.end()) {
+            Workspace *ws = *it;
+            model->SetWID(ws->ID());
+        }
+    }
+
     static error UserID(
         const std::string json_data_string,
         Poco::UInt64 *result);
@@ -182,26 +205,7 @@ class User : public BaseModel {
         const std::string password,
         std::string *result);
 
-    static error Signup(
-        TogglClient *https_client,
-        const std::string email,
-        const std::string password,
-        std::string *user_data_json);
-
-    static error Me(
-        TogglClient *https_client,
-        const std::string email,
-        const std::string password,
-        std::string *user_data,
-        const Poco::UInt64 since);
-
  private:
-    error updateJSON(
-        std::vector<Client *> * const,
-        std::vector<Project *> * const,
-        std::vector<TimeEntry *> * const,
-        std::string *result) const;
-
     void loadUserTagFromJSON(
         Json::Value data,
         std::set<Poco::UInt64> *alive = nullptr);
@@ -250,9 +254,6 @@ class User : public BaseModel {
     void parseResponseArray(
         const std::string response_body,
         std::vector<BatchUpdateResult> *responses);
-
-    template<typename T>
-    void ensureWID(T *model) const;
 
     std::string generateKey(const std::string password);
 

@@ -15,6 +15,8 @@
 		7408EDB618C51CEB00CBE8F1 /* autocomplete_item.h in Headers */ = {isa = PBXBuildFile; fileRef = 7408EDAE18C51CEB00CBE8F1 /* autocomplete_item.h */; };
 		7408EDB718C51CEB00CBE8F1 /* formatter.h in Headers */ = {isa = PBXBuildFile; fileRef = 7408EDAF18C51CEB00CBE8F1 /* formatter.h */; };
 		7408EDB818C51CEB00CBE8F1 /* feedback.cc in Sources */ = {isa = PBXBuildFile; fileRef = 7408EDB018C51CEB00CBE8F1 /* feedback.cc */; };
+		741951C91B41FCE500FA2724 /* migrations.cc in Sources */ = {isa = PBXBuildFile; fileRef = 741951C71B41FCE500FA2724 /* migrations.cc */; };
+		741951CA1B41FCE500FA2724 /* migrations.h in Headers */ = {isa = PBXBuildFile; fileRef = 741951C81B41FCE500FA2724 /* migrations.h */; };
 		74213486195C4D41007EF78B /* libPocoUtil.30.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 7421347E195C4D41007EF78B /* libPocoUtil.30.dylib */; };
 		74213487195C4D41007EF78B /* libPocoData.30.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 7421347F195C4D41007EF78B /* libPocoData.30.dylib */; };
 		74213488195C4D41007EF78B /* libPocoNetSSL.30.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 74213480195C4D41007EF78B /* libPocoNetSSL.30.dylib */; };
@@ -35,6 +37,8 @@
 		7484A2AA18887BEE0025A88B /* context.h in Headers */ = {isa = PBXBuildFile; fileRef = 7484A2A418887BEE0025A88B /* context.h */; };
 		7484A2AB18887BEE0025A88B /* context.cc in Sources */ = {isa = PBXBuildFile; fileRef = 7484A2A518887BEE0025A88B /* context.cc */; };
 		7484A2AC18887BEE0025A88B /* toggl_api_private.cc in Sources */ = {isa = PBXBuildFile; fileRef = 7484A2A618887BEE0025A88B /* toggl_api_private.cc */; };
+		748A0F401B388CCA0001A41E /* urls.cc in Sources */ = {isa = PBXBuildFile; fileRef = 748A0F3E1B388CCA0001A41E /* urls.cc */; };
+		748A0F411B388CCA0001A41E /* urls.h in Headers */ = {isa = PBXBuildFile; fileRef = 748A0F3F1B388CCA0001A41E /* urls.h */; };
 		748B7DA51AC5963B00FE01D2 /* custom_error_handler.cc in Sources */ = {isa = PBXBuildFile; fileRef = 748B7D9D1AC5963B00FE01D2 /* custom_error_handler.cc */; };
 		748B7DA61AC5963B00FE01D2 /* custom_error_handler.h in Headers */ = {isa = PBXBuildFile; fileRef = 748B7D9E1AC5963B00FE01D2 /* custom_error_handler.h */; };
 		748B7DA71AC5963B00FE01D2 /* model_change.cc in Sources */ = {isa = PBXBuildFile; fileRef = 748B7D9F1AC5963B00FE01D2 /* model_change.cc */; };
@@ -76,6 +80,7 @@
 		74CAAD20181860F7001B77BB /* timeline_uploader.cc in Sources */ = {isa = PBXBuildFile; fileRef = 74CAAD17181860F7001B77BB /* timeline_uploader.cc */; };
 		74CAAD21181860F7001B77BB /* timeline_uploader.h in Headers */ = {isa = PBXBuildFile; fileRef = 74CAAD18181860F7001B77BB /* timeline_uploader.h */; };
 		74CBDA3A19F97740008494FE /* jsoncpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 74CBDA3919F97740008494FE /* jsoncpp.cpp */; };
+		74DF24E51B414BD8000179AE /* timeline_event.cc in Sources */ = {isa = PBXBuildFile; fileRef = 74DF24E41B414BD8000179AE /* timeline_event.cc */; };
 		74E16831180F26D90026261C /* websocket_client.cc in Sources */ = {isa = PBXBuildFile; fileRef = 74E1682F180F26D90026261C /* websocket_client.cc */; };
 		74E16832180F26D90026261C /* websocket_client.h in Headers */ = {isa = PBXBuildFile; fileRef = 74E16830180F26D90026261C /* websocket_client.h */; };
 		74EB0F1717F9A2600046ABC1 /* https_client.cc in Sources */ = {isa = PBXBuildFile; fileRef = 74EB0F1517F9A2600046ABC1 /* https_client.cc */; };
@@ -100,6 +105,8 @@
 		7408EDAE18C51CEB00CBE8F1 /* autocomplete_item.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = autocomplete_item.h; path = ../../../autocomplete_item.h; sourceTree = "<group>"; };
 		7408EDAF18C51CEB00CBE8F1 /* formatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = formatter.h; path = ../../../formatter.h; sourceTree = "<group>"; };
 		7408EDB018C51CEB00CBE8F1 /* feedback.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = feedback.cc; path = ../../../feedback.cc; sourceTree = "<group>"; };
+		741951C71B41FCE500FA2724 /* migrations.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = migrations.cc; path = ../../../migrations.cc; sourceTree = "<group>"; };
+		741951C81B41FCE500FA2724 /* migrations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = migrations.h; path = ../../../migrations.h; sourceTree = "<group>"; };
 		7421347E195C4D41007EF78B /* libPocoUtil.30.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libPocoUtil.30.dylib; path = ../../../third_party/poco/lib/Darwin/x86_64/libPocoUtil.30.dylib; sourceTree = "<group>"; };
 		7421347F195C4D41007EF78B /* libPocoData.30.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libPocoData.30.dylib; path = ../../../third_party/poco/lib/Darwin/x86_64/libPocoData.30.dylib; sourceTree = "<group>"; };
 		74213480195C4D41007EF78B /* libPocoNetSSL.30.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libPocoNetSSL.30.dylib; path = ../../../third_party/poco/lib/Darwin/x86_64/libPocoNetSSL.30.dylib; sourceTree = "<group>"; };
@@ -120,6 +127,8 @@
 		7484A2A418887BEE0025A88B /* context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = context.h; path = ../../../context.h; sourceTree = "<group>"; };
 		7484A2A518887BEE0025A88B /* context.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = context.cc; path = ../../../context.cc; sourceTree = "<group>"; };
 		7484A2A618887BEE0025A88B /* toggl_api_private.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = toggl_api_private.cc; path = ../../../toggl_api_private.cc; sourceTree = "<group>"; };
+		748A0F3E1B388CCA0001A41E /* urls.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = urls.cc; path = ../../../urls.cc; sourceTree = "<group>"; };
+		748A0F3F1B388CCA0001A41E /* urls.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = urls.h; path = ../../../urls.h; sourceTree = "<group>"; };
 		748B7D9D1AC5963B00FE01D2 /* custom_error_handler.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = custom_error_handler.cc; path = ../../../custom_error_handler.cc; sourceTree = "<group>"; };
 		748B7D9E1AC5963B00FE01D2 /* custom_error_handler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = custom_error_handler.h; path = ../../../custom_error_handler.h; sourceTree = "<group>"; };
 		748B7D9F1AC5963B00FE01D2 /* model_change.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = model_change.cc; path = ../../../model_change.cc; sourceTree = "<group>"; };
@@ -161,6 +170,7 @@
 		74CAAD17181860F7001B77BB /* timeline_uploader.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = timeline_uploader.cc; path = ../../../timeline_uploader.cc; sourceTree = "<group>"; };
 		74CAAD18181860F7001B77BB /* timeline_uploader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = timeline_uploader.h; path = ../../../timeline_uploader.h; sourceTree = "<group>"; };
 		74CBDA3919F97740008494FE /* jsoncpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jsoncpp.cpp; path = ../../../../third_party/jsoncpp/dist/jsoncpp.cpp; sourceTree = "<group>"; };
+		74DF24E41B414BD8000179AE /* timeline_event.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = timeline_event.cc; path = ../../../timeline_event.cc; sourceTree = "<group>"; };
 		74E1682F180F26D90026261C /* websocket_client.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = websocket_client.cc; path = ../../../websocket_client.cc; sourceTree = "<group>"; };
 		74E16830180F26D90026261C /* websocket_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = websocket_client.h; path = ../../../websocket_client.h; sourceTree = "<group>"; };
 		74EB0F1517F9A2600046ABC1 /* https_client.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = https_client.cc; path = ../../../https_client.cc; sourceTree = "<group>"; };
@@ -258,6 +268,11 @@
 		C55DA59E17F06A3B00B42178 /* lib */ = {
 			isa = PBXGroup;
 			children = (
+				741951C71B41FCE500FA2724 /* migrations.cc */,
+				741951C81B41FCE500FA2724 /* migrations.h */,
+				74DF24E41B414BD8000179AE /* timeline_event.cc */,
+				748A0F3E1B388CCA0001A41E /* urls.cc */,
+				748A0F3F1B388CCA0001A41E /* urls.h */,
 				743024121AEFA819006DC911 /* autotracker.cc */,
 				743024131AEFA819006DC911 /* autotracker.h */,
 				748B7D9D1AC5963B00FE01D2 /* custom_error_handler.cc */,
@@ -369,6 +384,7 @@
 				74B587BF18BBC77E00E9F6CE /* user.h in Headers */,
 				748B7DA61AC5963B00FE01D2 /* custom_error_handler.h in Headers */,
 				74B587C118BBC77E00E9F6CE /* project.h in Headers */,
+				741951CA1B41FCE500FA2724 /* migrations.h in Headers */,
 				7408EDB318C51CEB00CBE8F1 /* const.h in Headers */,
 				C5DA1FB717F1942A001C4565 /* toggl_api.h in Headers */,
 				7484A2AA18887BEE0025A88B /* context.h in Headers */,
@@ -381,6 +397,7 @@
 				C5DA1FB117F18D7B001C4565 /* types.h in Headers */,
 				74E16832180F26D90026261C /* websocket_client.h in Headers */,
 				7484A2A818887BEE0025A88B /* toggl_api_private.h in Headers */,
+				748A0F411B388CCA0001A41E /* urls.h in Headers */,
 				74EB0F1817F9A2600046ABC1 /* https_client.h in Headers */,
 				74BAD32A18BEC4FD002FD4CF /* base_model.h in Headers */,
 				74B587C518BBC77E00E9F6CE /* batch_update_result.h in Headers */,
@@ -462,16 +479,19 @@
 				7408EDB218C51CEB00CBE8F1 /* autocomplete_item.cc in Sources */,
 				74CAAD19181860F7001B77BB /* get_focused_window_mac.cc in Sources */,
 				74F7CDDB18199FA300630BD0 /* window_change_recorder.cc in Sources */,
+				748A0F401B388CCA0001A41E /* urls.cc in Sources */,
 				74EB0F1717F9A2600046ABC1 /* https_client.cc in Sources */,
 				74B587C918BBC77E00E9F6CE /* user.cc in Sources */,
 				74B587BB18BBC77E00E9F6CE /* formatter.cc in Sources */,
 				74B587CE18BBC77E00E9F6CE /* related_data.cc in Sources */,
+				741951C91B41FCE500FA2724 /* migrations.cc in Sources */,
 				74B587CC18BBC77E00E9F6CE /* workspace.cc in Sources */,
 				748B7DA71AC5963B00FE01D2 /* model_change.cc in Sources */,
 				74B587C818BBC77E00E9F6CE /* task.cc in Sources */,
 				74CAAD20181860F7001B77BB /* timeline_uploader.cc in Sources */,
 				745E84F5194953A70065E49A /* gui.cc in Sources */,
 				7484A2AC18887BEE0025A88B /* toggl_api_private.cc in Sources */,
+				74DF24E51B414BD8000179AE /* timeline_event.cc in Sources */,
 				74B587CB18BBC77E00E9F6CE /* project.cc in Sources */,
 				748B7DAB1AC5963B00FE01D2 /* settings.cc in Sources */,
 				74B587CF18BBC77E00E9F6CE /* batch_update_result.cc in Sources */,

@@ -31,7 +31,23 @@ extern "C" {
 #define bool_t int
 #endif
 
-    // Models
+// Constants
+
+#define kOnlineStateOnline 0
+#define kOnlineStateNoNetwork 1
+#define kOnlineStateBackendDown 2
+
+#define kSyncStateIdle 0
+#define kSyncStateWork 1
+
+#define kTimedEventTypeTimelineEvent 1
+#define kTimedEventTypeTimeEntry 2
+
+// Experimental features
+
+#define kExperimentalFeatureRenderTimeline false
+
+// Models
 
     typedef struct {
         int64_t DurationInSeconds;
@@ -66,6 +82,9 @@ extern "C" {
         // If syncing a time entry ended with an error,
         // the error is attached to the time entry
         char_t *Error;
+        // kTimedEventTypeTimelineEvent 1
+        // kTimedEventTypeTimeEntry 2
+        uint64_t ViewType;
         // Next in list
         void *Next;
     } TogglTimeEntryView;
@@ -83,7 +102,10 @@ extern "C" {
         char_t *ProjectColor;
         uint64_t TaskID;
         uint64_t ProjectID;
+        uint64_t WorkspaceID;
         uint64_t Type;
+        // If its a time entry, it has tags
+        char_t *Tags;
         void *Next;
     } TogglAutocompleteView;
 
@@ -124,6 +146,7 @@ extern "C" {
         char_t *RemindEnds;
         bool_t Autotrack;
         bool_t OpenEditorOnShortcut;
+        bool_t RenderTimeline;
     } TogglSettingsView;
 
     typedef struct {
@@ -133,6 +156,16 @@ extern "C" {
         char_t *ProjectName;
         void *Next;
     } TogglAutotrackerRuleView;
+
+    typedef struct {
+        int64_t ID;
+        char_t *Title;
+        char_t *Filename;
+        uint64_t StartTime;
+        uint64_t EndTime;
+        bool_t Idle;
+        void *Next;
+    } TogglTimelineEventView;
 
     // Callbacks that need to be implemented in UI
 
@@ -495,6 +528,10 @@ extern "C" {
         const char_t *remind_starts,
         const char_t *remind_ends);
 
+    TOGGL_EXPORT bool_t toggl_set_settings_render_timeline(
+        void *context,
+        const bool_t value);
+
     TOGGL_EXPORT bool_t toggl_set_settings_use_idle_detection(
         void *context,
         const bool_t use_idle_detection);
@@ -575,29 +612,33 @@ extern "C" {
     TOGGL_EXPORT bool_t toggl_clear_cache(
         void *context);
 
-    // you must free() the result
+    // returns GUID of the started time entry. you must free() the result
     TOGGL_EXPORT char_t *toggl_start(
         void *context,
         const char_t *description,
         const char_t *duration,
         const uint64_t task_id,
         const uint64_t project_id,
-        const char_t *project_guid);
+        const char_t *project_guid,
+        const char_t *tags);
 
-    TOGGL_EXPORT bool_t toggl_add_project(
+    // returns GUID of the new project. you must free() the result
+    TOGGL_EXPORT char_t *toggl_add_project(
         void *context,
         const char_t *time_entry_guid,
         const uint64_t workspace_id,
         const uint64_t client_id,
+        const char_t *client_guid,
         const char_t *project_name,
         const bool_t is_private);
 
-    TOGGL_EXPORT bool_t toggl_create_client(
+    // returns GUID of the new client. you must free() the result
+    TOGGL_EXPORT char_t *toggl_create_client(
         void *context,
         const uint64_t workspace_id,
         const char_t *client_name);
 
-    // you must free() the result
+    // returns GUID of the new project. you must free() the result
     TOGGL_EXPORT char_t *toggl_create_project(
         void *context,
         const uint64_t workspace_id,
@@ -631,6 +672,12 @@ extern "C" {
     TOGGL_EXPORT bool_t toggl_timeline_is_recording_enabled(
         void *context);
 
+    // Returns GUID of the created time entry,
+    // if successful. You must free() the result.
+    TOGGL_EXPORT char_t *toggl_timeline_save_as_time_entry(
+        void *context,
+        const char_t *guid);
+
     TOGGL_EXPORT void toggl_set_sleep(
         void *context);
 
@@ -644,6 +691,11 @@ extern "C" {
     TOGGL_EXPORT void toggl_set_idle_seconds(
         void *context,
         const uint64_t idle_seconds);
+
+    TOGGL_EXPORT bool_t toggl_set_promotion_response(
+        void *context,
+        const int64_t promotion_type,
+        const int64_t promotion_response);
 
     // Shared helpers
 

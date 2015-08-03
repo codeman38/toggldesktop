@@ -210,6 +210,7 @@ void on_display_settings(
     testing::testresult::settings.focus_on_shortcut = settings->FocusOnShortcut;
     testing::testresult::settings.manual_mode = settings->ManualMode;
     testing::testresult::settings.autotrack = settings->Autotrack;
+    testing::testresult::settings.render_timeline = settings->RenderTimeline;
 
     testing::testresult::use_proxy = settings->UseProxy;
 
@@ -384,6 +385,9 @@ TEST(toggl_api, toggl_set_settings) {
     ASSERT_TRUE(toggl_set_settings_manual_mode(app.ctx(), false));
     ASSERT_FALSE(testing::testresult::settings.manual_mode);
 
+    ASSERT_TRUE(toggl_set_settings_render_timeline(app.ctx(), false));
+    ASSERT_FALSE(testing::testresult::settings.render_timeline);
+
     // set to true / not null
 
     ASSERT_TRUE(toggl_set_settings_menubar_project(app.ctx(), true));
@@ -424,6 +428,11 @@ TEST(toggl_api, toggl_set_settings) {
     ASSERT_TRUE(toggl_set_settings_autotrack(app.ctx(), true));
     ASSERT_EQ(noError, testing::testresult::error);
     ASSERT_TRUE(testing::testresult::settings.autotrack);
+
+    testing::testresult::error = noError;
+    ASSERT_TRUE(toggl_set_settings_render_timeline(app.ctx(), true));
+    ASSERT_EQ(noError, testing::testresult::error);
+    ASSERT_TRUE(testing::testresult::settings.render_timeline);
 }
 
 TEST(toggl_api, toggl_set_proxy_settings) {
@@ -742,7 +751,7 @@ TEST(toggl_api, toggl_set_idle_seconds) {
     ASSERT_EQ("", testing::testresult::idle_duration);
     ASSERT_EQ("", testing::testresult::idle_guid);
 
-    char_t *guid = toggl_start(app.ctx(), "test", "", 0, 0, 0);
+    char_t *guid = toggl_start(app.ctx(), "test", "", 0, 0, 0, 0);
     ASSERT_TRUE(guid);
     free(guid);
 
@@ -810,12 +819,13 @@ TEST(toggl_api, toggl_add_project) {
     bool_t is_private = false;
 
     testing::testresult::error = "";
-    bool_t res = toggl_add_project(app.ctx(),
-                                   guid.c_str(),
-                                   wid,
-                                   cid,
-                                   project_name.c_str(),
-                                   is_private);
+    char_t *res = toggl_add_project(app.ctx(),
+                                    guid.c_str(),
+                                    wid,
+                                    cid,
+                                    "",
+                                    project_name.c_str(),
+                                    is_private);
     ASSERT_EQ("Please select a workspace",
               testing::testresult::error);
     ASSERT_FALSE(res);
@@ -825,11 +835,13 @@ TEST(toggl_api, toggl_add_project) {
                             guid.c_str(),
                             wid,
                             cid,
+                            "",
                             project_name.c_str(),
                             is_private);
     ASSERT_EQ("Project name must not be empty",
               testing::testresult::error);
     ASSERT_FALSE(res);
+    free(res);
 
     project_name = "A new project";
     testing::testresult::error = "";
@@ -837,10 +849,12 @@ TEST(toggl_api, toggl_add_project) {
                             guid.c_str(),
                             wid,
                             cid,
+                            "",
                             project_name.c_str(),
                             is_private);
     ASSERT_EQ("", testing::testresult::error);
     ASSERT_TRUE(res);
+    free(res);
 
     bool found(false);
     for (std::size_t i = 0; i < testing::testresult::projects.size(); i++) {
@@ -860,6 +874,7 @@ TEST(toggl_api, toggl_create_project) {
 
     uint64_t wid = 0;
     uint64_t cid = 0;
+    // FIXME: std::string project_name("    ");
     std::string project_name("");
     bool_t is_private = false;
 
@@ -902,6 +917,21 @@ TEST(toggl_api, toggl_create_project) {
         }
     }
     ASSERT_TRUE(found);
+
+    // User should be able to add as many projects as it likes
+    for (int i = 0; i < 10; i++) {
+        std::stringstream ss;
+        ss << "another project " << i;
+        testing::testresult::error = "";
+        project_guid = toggl_create_project(app.ctx(),
+                                            wid,
+                                            cid,
+                                            ss.str().c_str(),
+                                            is_private);
+        ASSERT_EQ("", testing::testresult::error);
+        ASSERT_TRUE(project_guid);
+        free(project_guid);
+    }
 }
 
 TEST(toggl_api, toggl_create_client) {
@@ -911,14 +941,16 @@ TEST(toggl_api, toggl_create_client) {
     ASSERT_TRUE(testing_set_logged_in_user(app.ctx(), json.c_str()));
 
     uint64_t wid = 0;
+    // FIXME: std::string client_name("        ");
     std::string client_name("");
 
     testing::testresult::error = "";
-    bool_t res = toggl_create_client(app.ctx(),
-                                     wid,
-                                     client_name.c_str());
+    char_t *res = toggl_create_client(app.ctx(),
+                                      wid,
+                                      client_name.c_str());
     ASSERT_EQ("Please select a workspace", testing::testresult::error);
     ASSERT_FALSE(res);
+    free(res);
 
     wid = 123456789;
     res = toggl_create_client(app.ctx(),
@@ -927,6 +959,7 @@ TEST(toggl_api, toggl_create_client) {
     ASSERT_EQ("Client name must not be empty",
               testing::testresult::error);
     ASSERT_FALSE(res);
+    free(res);
 
     client_name = "A new client";
     testing::testresult::error = "";
@@ -935,6 +968,7 @@ TEST(toggl_api, toggl_create_client) {
                               client_name.c_str());
     ASSERT_EQ("", testing::testresult::error);
     ASSERT_TRUE(res);
+    free(res);
 
     bool found(false);
     for (std::size_t i = 0; i < testing::testresult::clients.size(); i++) {
@@ -944,6 +978,19 @@ TEST(toggl_api, toggl_create_client) {
         }
     }
     ASSERT_TRUE(found);
+
+    // We should be able to add as many clients as we like!
+    for (int i = 0; i < 10; i++) {
+        std::stringstream ss;
+        ss << "extra client " << i;
+        testing::testresult::error = "";
+        res = toggl_create_client(app.ctx(),
+                                  wid,
+                                  ss.str().c_str());
+        ASSERT_EQ("", testing::testresult::error);
+        ASSERT_TRUE(res);
+        free(res);
+    }
 }
 
 TEST(toggl_api, toggl_continue) {
@@ -1119,7 +1166,7 @@ TEST(toggl_api, toggl_stop) {
 
     testing::testresult::timer_state = TimeEntry();
 
-    char_t *guid = toggl_start(app.ctx(), "test", "", 0, 0, 0);
+    char_t *guid = toggl_start(app.ctx(), "test", "", 0, 0, 0, 0);
     ASSERT_TRUE(guid);
     free(guid);
 
@@ -1136,11 +1183,26 @@ TEST(toggl_api, toggl_start) {
 
     testing::testresult::timer_state = TimeEntry();
 
-    char_t *guid = toggl_start(app.ctx(), "test", "", 0, 0, 0);
+    char_t *guid = toggl_start(app.ctx(), "test", "", 0, 0, 0, 0);
     ASSERT_TRUE(guid);
     free(guid);
 
     ASSERT_FALSE(testing::testresult::timer_state.GUID().empty());
+}
+
+TEST(toggl_api, toggl_start_with_tags) {
+    testing::App app;
+    std::string json = loadTestData();
+    ASSERT_TRUE(testing_set_logged_in_user(app.ctx(), json.c_str()));
+
+    testing::testresult::timer_state = TimeEntry();
+
+    char_t *guid = toggl_start(app.ctx(), "test", "", 0, 0, 0, "a\tb\tc");
+    ASSERT_TRUE(guid);
+    free(guid);
+
+    ASSERT_FALSE(testing::testresult::timer_state.GUID().empty());
+    ASSERT_EQ(std::string("a\tb\tc"), testing::testresult::timer_state.Tags());
 }
 
 TEST(toggl_api, toggl_start_with_open_editor_on_shortcut_setting) {
@@ -1152,7 +1214,7 @@ TEST(toggl_api, toggl_start_with_open_editor_on_shortcut_setting) {
 
     testing::testresult::editor_state = TimeEntry();
 
-    char_t *guid = toggl_start(app.ctx(), "test", "", 0, 0, 0);
+    char_t *guid = toggl_start(app.ctx(), "test", "", 0, 0, 0, 0);
     ASSERT_TRUE(guid);
     free(guid);
 
@@ -1162,12 +1224,13 @@ TEST(toggl_api, toggl_start_with_open_editor_on_shortcut_setting) {
 
     testing::testresult::editor_state = TimeEntry();
 
-    guid = toggl_start(app.ctx(), "test", "", 0, 0, 0);
+    guid = toggl_start(app.ctx(), "test", "", 0, 0, 0, 0);
     ASSERT_TRUE(guid);
-    ASSERT_EQ(std::string(guid), testing::testresult::editor_state.GUID());
+    // It should *not* open the editor, unless a shortcut was used
+    // in the app, but this logic is driven from the UI instead of the lib.
+    ASSERT_EQ(std::string(""), testing::testresult::editor_state.GUID());
     free(guid);
 }
-
 
 TEST(toggl_api, toggl_set_time_entry_billable) {
     testing::App app;
@@ -1176,7 +1239,7 @@ TEST(toggl_api, toggl_set_time_entry_billable) {
 
     testing::testresult::timer_state = TimeEntry();
 
-    char_t *res = toggl_start(app.ctx(), "test", "", 0, 0, 0);
+    char_t *res = toggl_start(app.ctx(), "test", "", 0, 0, 0, 0);
     ASSERT_TRUE(res);
     free(res);
 
@@ -1197,7 +1260,7 @@ TEST(toggl_api, toggl_set_time_entry_tags) {
 
     testing::testresult::timer_state = TimeEntry();
 
-    char_t *res = toggl_start(app.ctx(), "test", "", 0, 0, 0);
+    char_t *res = toggl_start(app.ctx(), "test", "", 0, 0, 0, 0);
     ASSERT_TRUE(res);
     free(res);
 
@@ -1246,7 +1309,7 @@ TEST(toggl_api, toggl_discard_time_at) {
 
     // Start a time entry
 
-    char_t *res = toggl_start(app.ctx(), "test", "", 0, 0, 0);
+    char_t *res = toggl_start(app.ctx(), "test", "", 0, 0, 0, 0);
     ASSERT_TRUE(res);
     free(res);
 
@@ -1275,7 +1338,7 @@ TEST(toggl_api, toggl_discard_time_at) {
 
     // Start another time entry
 
-    res = toggl_start(app.ctx(), "test 2", "", 0, 0, 0);
+    res = toggl_start(app.ctx(), "test 2", "", 0, 0, 0, 0);
     ASSERT_TRUE(res);
     free(res);
 

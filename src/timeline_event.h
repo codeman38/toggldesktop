@@ -8,46 +8,92 @@
 #include <sstream>
 #include <string>
 
-#include "Poco/Types.h"
+#include "./toggl_api.h"
+#include "./base_model.h"
+#include "./formatter.h"
 
-class TimelineEvent {
+namespace toggl {
+
+class TimelineEvent : public BaseModel, public TimedEvent {
  public:
-    TimelineEvent() :
-    id(0),
-    user_id(0),
-    title(""),
-    filename(""),
-    start_time(0),
-    end_time(0),
-    idle(false),
-    chunked(false),
-    uploaded(false) {}
+    TimelineEvent()
+        : BaseModel()
+    , title_("")
+    , filename_("")
+    , start_time_(0)
+    , end_time_(0)
+    , idle_(false)
+    , chunked_(false)
+    , uploaded_(false) {}
 
-    void SetTitle(const std::string value) {
-        title = value;
+    virtual ~TimelineEvent() {}
+
+    const std::string &Title() const {
+        return title_;
+    }
+    void SetTitle(const std::string value);
+
+    const Poco::UInt64 &Start() const {
+        return start_time_;
+    }
+    void SetStart(const Poco::UInt64 value);
+
+    const Poco::UInt64 &EndTime() const {
+        return end_time_;
+    }
+    void SetEndTime(const Poco::UInt64 value);
+
+    const bool &Idle() const {
+        return idle_;
+    }
+    void SetIdle(const bool value);
+
+    const std::string &Filename() const {
+        return filename_;
+    }
+    void SetFilename(const std::string value);
+
+    const bool &Chunked() const {
+        return chunked_;
+    }
+    void SetChunked(const bool value);
+
+    const bool &Uploaded() const {
+        return uploaded_;
+    }
+    void SetUploaded(const bool value);
+
+    bool VisibleToUser() const {
+        return !Uploaded() && !DeletedAt() && Chunked();
     }
 
-    Poco::Int64 id;
-    Poco::UInt64 user_id;
-    std::string title;
-    std::string filename;
-    time_t start_time;
-    time_t end_time;
-    bool idle;
-    bool chunked;
-    bool uploaded;
+    // Override BaseModel
 
-    std::string String() const {
-        std::stringstream ss;
-        ss << start_time
-           << ";"
-           << end_time
-           << ";"
-           << filename
-           << ";"
-           << title;
-        return ss.str();
+    std::string String() const;
+    std::string ModelName() const;
+    std::string ModelURL() const;
+    Json::Value SaveToJSON() const;
+
+    // Implement TimedEvent
+
+    virtual Poco::UInt64 Type() const {
+        return kTimedEventTypeTimelineEvent;
     }
+
+    virtual Poco::Int64 Duration() const {
+        return EndTime() - Start();
+    }
+
+ private:
+    std::string title_;
+    std::string filename_;
+    Poco::UInt64 start_time_;
+    Poco::UInt64 end_time_;
+    bool idle_;
+    bool chunked_;
+    bool uploaded_;
 };
+
+}  // namespace toggl
 
 #endif  // SRC_TIMELINE_EVENT_H_

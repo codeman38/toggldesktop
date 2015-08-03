@@ -170,6 +170,24 @@
     <Compile Include="AutoCompleteTextBox.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="AutoCompletion\AutoCompleteController.cs" />
+    <Compile Include="AutoCompletion\AutoCompleteItem.cs" />
+    <Compile Include="AutoCompletion\AutoCompleteListCategory.cs" />
+    <Compile Include="AutoCompletion\AutoCompleteListItem.cs" />
+    <Compile Include="AutoCompletion\IAutoCompleteListItem.cs" />
+    <Compile Include="AutoCompletion\Implementation\AutoCompleteControllers.cs" />
+    <Compile Include="AutoCompletion\Implementation\ClientCategory.cs" />
+    <Compile Include="AutoCompletion\Implementation\ModelItem.cs" />
+    <Compile Include="AutoCompletion\Implementation\NestedCategory.cs" />
+    <Compile Include="AutoCompletion\Implementation\SimpleCategory.cs" />
+    <Compile Include="AutoCompletion\Implementation\SimpleNoncompletingCategory.cs" />
+    <Compile Include="AutoCompletion\Implementation\StringItem.cs" />
+    <Compile Include="AutoCompletion\Implementation\ISelectable.cs" />
+    <Compile Include="AutoCompletion\Implementation\ProjectItem.cs" />
+    <Compile Include="AutoCompletion\Implementation\DescriptionItem.cs" />
+    <Compile Include="AutoCompletion\Implementation\SimpleItem.cs" />
+    <Compile Include="AutoCompletion\Implementation\TimerItem.cs" />
+    <Compile Include="AutoCompletion\Implementation\WorkspaceCategory.cs" />
     <Compile Include="ComboBoxHelper.cs" />
     <Compile Include="ControlHelper.cs" />
     <Compile Include="CustomComboBox.cs">
@@ -196,6 +214,36 @@
     <Compile Include="IdleNotificationWindowController.Designer.cs">
       <DependentUpon>IdleNotificationWindowController.cs</DependentUpon>
     </Compile>
+    <Compile Include="LinqExtensions.cs" />
+    <Compile Include="StaticObjectPool.cs" />
+    <Compile Include="WPF\AddValueConverter.cs" />
+    <Compile Include="WPF\AutoComplete\GrayTextCategory.xaml.cs">
+      <DependentUpon>GrayTextCategory.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF\AutoComplete\EntryBase.cs" />
+    <Compile Include="WPF\AutoComplete\ClientCategory.xaml.cs">
+      <DependentUpon>ClientCategory.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF\AutoComplete\TimerEntry.xaml.cs">
+      <DependentUpon>TimerEntry.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF\AutoComplete\WorkspaceCategory.xaml.cs">
+      <DependentUpon>WorkspaceCategory.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF\AutoCompletionPopup.xaml.cs">
+      <DependentUpon>AutoCompletionPopup.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF\AutoComplete\ModelEntry.xaml.cs">
+      <DependentUpon>ModelEntry.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF\AutoComplete\ProjectEntry.xaml.cs">
+      <DependentUpon>ProjectEntry.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF\AutoComplete\DescriptionAutoCompleteEntry.xaml.cs">
+      <DependentUpon>DescriptionAutoCompleteEntry.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF\ExtendedTextBox.cs" />
+    <Compile Include="WPF\Extensions.cs" />
     <Compile Include="WPF\LoginConfirmButton.xaml.cs">
       <DependentUpon>LoginConfirmButton.xaml</DependentUpon>
     </Compile>
@@ -248,12 +296,32 @@
     </Compile>
     <Compile Include="Utils.cs" />
     <Compile Include="Win32.cs" />
+    <Compile Include="WPF\OpacityExtension.cs" />
+    <Compile Include="WPF\PreferencesWindow.xaml.cs">
+      <DependentUpon>PreferencesWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF\PropertyHelpers.cs" />
     <Compile Include="WPF\Resources.cs" />
+    <Compile Include="WPF\AutoComplete\StringEntry.xaml.cs">
+      <DependentUpon>StringEntry.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF\Tag.xaml.cs">
+      <DependentUpon>Tag.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF\TagList.xaml.cs">
+      <DependentUpon>TagList.xaml</DependentUpon>
+    </Compile>
     <Compile Include="WPF\TimeEntryCell.xaml.cs">
       <DependentUpon>TimeEntryCell.xaml</DependentUpon>
     </Compile>
+    <Compile Include="WPF\TimeEntryEditViewController.xaml.cs">
+      <DependentUpon>TimeEntryEditViewController.xaml</DependentUpon>
+    </Compile>
     <Compile Include="WPF\TimeEntryList.xaml.cs">
       <DependentUpon>TimeEntryList.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WPF\TimerEditViewController.xaml.cs">
+      <DependentUpon>TimerEditViewController.xaml</DependentUpon>
     </Compile>
     <EmbeddedResource Include="AboutWindowController.resx">
       <DependentUpon>AboutWindowController.cs</DependentUpon>
@@ -306,6 +374,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="uitest.lua" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -331,7 +400,7 @@
     <None Include="Resources\logo.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\logo64.png" />
+    <Resource Include="Resources\logo64.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\icon-billable.png" />
@@ -371,7 +440,7 @@
     <None Include="Resources\Close.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\CloseDisabled.png" />
+    <Resource Include="Resources\CloseDisabled.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\CloseHot.png" />
@@ -404,7 +473,7 @@
     <None Include="Resources\MinimizePressed.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\icon-x.png" />
+    <Resource Include="Resources\icon-x.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\popup_arrow.png" />
@@ -437,7 +506,7 @@
     <None Include="Resources\darkBg.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\timerDarkBg.png" />
+    <Resource Include="Resources\timerDarkBg.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\ic_arrow_back_grey600_24dp.png" />
@@ -450,6 +519,38 @@
     <None Include="Resources\toggl-logo-white.png" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="WPF\AutoComplete\GrayTextCategory.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="WPF\AutoComplete\ClientCategory.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="WPF\AutoComplete\TimerEntry.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="WPF\AutoComplete\WorkspaceCategory.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WPF\AutoCompletionPopup.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="WPF\AutoComplete\ModelEntry.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WPF\AutoComplete\ProjectEntry.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="WPF\AutoComplete\DescriptionAutoCompleteEntry.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="WPF\LoginConfirmButton.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -461,6 +562,22 @@
     <Page Include="WPF\LoginTextBox.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WPF\PreferencesWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WPF\Resources\PreferencesWindowStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="WPF\Resources\EditViewControllerStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="WPF\Resources\EditViewStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="WPF\Resources\TimeEntryCellStyles.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -474,7 +591,23 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="WPF\AutoComplete\StringEntry.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WPF\Tag.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WPF\TagList.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="WPF\TimeEntryCell.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WPF\TimeEntryEditViewController.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -482,6 +615,27 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="WPF\TimerEditViewController.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\timerLightBg.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\ic_expand_more_grey600_36dp.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\ic_arrow_back_grey600_36dp.png" />
+    <Resource Include="Resources\ic_close_grey600_36dp.png" />
+    <Resource Include="Resources\ic_delete_grey600_36dp.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\ic_cancel_grey600_24dp.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\ic_calendar_2x.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -116,11 +116,23 @@
 	self.CanAddProjects = te->CanAddProjects;
 	self.DefaultWID = te->DefaultWID;
 	self.CanSeeBillable = te->CanSeeBillable;
-	self.WorkspaceName = [NSString stringWithUTF8String:te->WorkspaceName];
+	if (te->WorkspaceName)
+	{
+		self.WorkspaceName = [NSString stringWithUTF8String:te->WorkspaceName];
+	}
+	else
+	{
+		self.WorkspaceName = nil;
+	}
 	if (te->Error)
 	{
 		self.Error = [NSString stringWithUTF8String:te->Error];
 	}
+	else
+	{
+		self.Error = nil;
+	}
+	self.ViewType = te->ViewType;
 }
 
 - (NSString *)description

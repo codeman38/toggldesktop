@@ -171,7 +171,7 @@ libs= -L$(pocolib) \
 	-llua
 endif
 
-cxx=g++ -fprofile-arcs -ftest-coverage -std=c++11
+cxx=g++ -fprofile-arcs -ftest-coverage -std=gnu++0x
 
 default: app
 
@@ -395,6 +395,9 @@ build/formatter.o: src/formatter.cc
 build/model_change.o: src/model_change.cc
 	$(cxx) $(cflags) -c src/model_change.cc -o build/model_change.o
 
+build/migrations.o: src/migrations.cc
+	$(cxx) $(cflags) -c src/migrations.cc -o build/migrations.o
+
 build/database.o: src/database.cc
 	$(cxx) $(cflags) -c src/database.cc -o build/database.o
 
@@ -415,6 +418,12 @@ build/idle.o: src/idle.cc
 
 build/analytics.o: src/analytics.cc
 	$(cxx) $(cflags) -c src/analytics.cc -o build/analytics.o
+
+build/urls.o: src/urls.cc
+	$(cxx) $(cflags) -c src/urls.cc -o build/urls.o
+
+build/timeline_event.o: src/timeline_event.cc
+	$(cxx) $(cflags) -c src/timeline_event.cc -o build/timeline_event.o
 
 build/context.o: src/context.cc
 	$(cxx) $(cflags) -c src/context.cc -o build/context.o
@@ -453,6 +462,7 @@ build/test/gtest-all.o: $(GTEST_ROOT)/src/gtest-all.cc
 	$(cxx) $(cflags) -c $(GTEST_ROOT)/src/gtest-all.cc -o build/test/gtest-all.o
 
 objects: build/jsoncpp.o \
+	build/related_data.o \
 	build/proxy.o \
 	build/netconf.o \
 	build/https_client.o \
@@ -465,7 +475,6 @@ objects: build/jsoncpp.o \
 	build/task.o \
 	build/time_entry.o \
 	build/tag.o \
-	build/related_data.o \
 	build/batch_update_result.o \
 	build/formatter.o \
 	build/model_change.o \
@@ -478,6 +487,9 @@ objects: build/jsoncpp.o \
 	build/analytics.o \
 	build/autotracker.o \
 	build/settings.o \
+	build/urls.o \
+	build/timeline_event.o \
+	build/migrations.o \
 	build/context.o \
 	build/toggl_api_private.o \
 	build/toggl_api.o \
@@ -492,9 +504,11 @@ test_objects: build/test/gtest-all.o \
 
 uitest: clean_test
 ifeq ($(osname), windows)
-	$(executable) --script-path src/test/uitest.lua \
+	$(executable) \
+		--script-path src/test/uitest.lua \
 		--log-path test/uitest.log \
-		--db-path test/uitest.db
+		--db-path test/uitest.db \
+		--environment test
 else
 	$(executable) \
 		--script-path $(pwd)/src/test/uitest.lua \

@@ -25,6 +25,7 @@ public static class Toggl
     public static string ScriptPath;
     public static string DatabasePath;
     public static string LogPath;
+    public static string Env = "production";
 
     // Models
 
@@ -79,6 +80,7 @@ public static class Toggl
         public string WorkspaceName;
         [MarshalAs(UnmanagedType.LPWStr)]
         public string Error;
+        public UInt64 ViewType;
         public IntPtr Next;
     }
 
@@ -98,9 +100,10 @@ public static class Toggl
         [MarshalAs(UnmanagedType.LPWStr)]
         public string ClientLabel;
         [MarshalAs(UnmanagedType.LPWStr)]
-        public string Project;
+        public string ProjectColor;
         public UInt64 TaskID;
         public UInt64 ProjectID;
+        public UInt64 WorkspaceID;
         public UInt64 Type;
         public IntPtr Next;
 
@@ -1005,22 +1008,25 @@ public static class Toggl
     }
 
     [DllImport(dll, CharSet = charset, CallingConvention = convention)]
-    [return: MarshalAs(UnmanagedType.I1)]
-    private static extern bool toggl_add_project(
+    [return: MarshalAs(UnmanagedType.LPWStr)]
+    private static extern string toggl_add_project(
         IntPtr context,
         [MarshalAs(UnmanagedType.LPWStr)]
         string time_entry_guid,
         UInt64 workspace_id,
         UInt64 client_id,
         [MarshalAs(UnmanagedType.LPWStr)]
+        string client_guid,
+        [MarshalAs(UnmanagedType.LPWStr)]
         string project_name,
         [MarshalAs(UnmanagedType.I1)]
         bool is_private);
 
-    public static bool AddProject(
+    public static string AddProject(
         string time_entry_guid,
         UInt64 workspace_id,
         UInt64 client_id,
+        string client_guid,
         string project_name,
         bool is_private)
     {
@@ -1028,19 +1034,20 @@ public static class Toggl
                                  time_entry_guid,
                                  workspace_id,
                                  client_id,
+                                 client_guid,
                                  project_name,
                                  is_private);
     }
 
     [DllImport(dll, CharSet = charset, CallingConvention = convention)]
-    [return: MarshalAs(UnmanagedType.I1)]
-    private static extern bool toggl_create_client(
+    [return: MarshalAs(UnmanagedType.LPWStr)]
+    private static extern string toggl_create_client(
         IntPtr context,
         UInt64 workspace_id,
         [MarshalAs(UnmanagedType.LPWStr)]
         string client_name);
 
-    public static bool AddClient(
+    public static string CreateClient(
         UInt64 workspace_id,
         string client_name)
     {
@@ -1069,6 +1076,16 @@ public static class Toggl
     public static string UpdateChannel()
     {
         return toggl_get_update_channel(ctx);
+    }
+
+    [DllImport(dll, CharSet = charset, CallingConvention = convention)]
+    [return: MarshalAs(UnmanagedType.LPWStr)]
+    private static extern string toggl_get_user_email(
+        IntPtr context);
+
+    public static string UserEmail()
+    {
+        return toggl_get_user_email(ctx);
     }
 
     [DllImport(dll, CharSet = charset, CallingConvention = convention)]
@@ -1198,6 +1215,11 @@ public static class Toggl
                 DatabasePath = args[i + 1];
                 Console.WriteLine("DatabasePath = {0}", DatabasePath);
             }
+            else if (args[i].Contains("environment"))
+            {
+                Env = args[i + 1];
+                Console.WriteLine("Environment = {0}", Env);
+            }
         }
     }
 
@@ -1313,7 +1335,7 @@ public static class Toggl
 
         ctx = toggl_context_init("windows_native_app", version);
 
-        toggl_set_environment(ctx, "production");
+        toggl_set_environment(ctx, Env);
 
         string cacert_path = Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory,

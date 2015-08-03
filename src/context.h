@@ -17,7 +17,6 @@
 #include "./model_change.h"
 #include "./timeline_event.h"
 #include "./timeline_notifications.h"
-#include "./toggl_api.h"
 #include "./types.h"
 #include "./websocket_client.h"
 
@@ -76,6 +75,8 @@ class Context : public TimelineDatasource {
     void DisableUpdateCheck() {
         update_check_disabled_ = true;
     }
+
+    error SetSettingsRenderTimeline(const bool &value);
 
     error SetSettingsUseIdleDetection(const bool use_idle_detection);
 
@@ -146,7 +147,7 @@ class Context : public TimelineDatasource {
 
     error Logout();
 
-    error SetLoggedInUserFromJSON(const std::string user_data_json);
+    error SetLoggedInUserFromJSON(const std::string json);
 
     error ClearCache();
 
@@ -155,14 +156,18 @@ class Context : public TimelineDatasource {
         const std::string duration,
         const Poco::UInt64 task_id,
         const Poco::UInt64 project_id,
-        const std::string project_guid);
+        const std::string project_guid,
+        const std::string tags);
 
     error ContinueLatest();
 
     error Continue(
         const std::string GUID);
 
-    void DisplayTimeEntryList(const bool open);
+    TimeEntry *SaveTimelineAsTimeEntry(
+        const std::string GUID);
+
+    void DisplayTimeEntryList(const bool open = false);
 
     error DisplaySettings(const bool open = false);
 
@@ -217,16 +222,16 @@ class Context : public TimelineDatasource {
         const std::string GUID,
         const Poco::Int64 at);
 
-    TimeEntry * RunningTimeEntry() const;
+    TimeEntry *RunningTimeEntry();
 
     error ToggleTimelineRecording(
         const bool record_timeline);
 
-    bool IsTimelineRecordingEnabled() {
+    bool IsTimelineRecordingEnabled() const {
         return user_ && user_->RecordTimeline();
     }
 
-    error SaveUpdateChannel(
+    error SetUpdateChannel(
         const std::string channel);
 
     error UpdateChannel(
@@ -235,10 +240,11 @@ class Context : public TimelineDatasource {
     Project *CreateProject(
         const Poco::UInt64 workspace_id,
         const Poco::UInt64 client_id,
+        const std::string client_guid,
         const std::string project_name,
         const bool is_private);
 
-    error CreateClient(
+    Client *CreateClient(
         const Poco::UInt64 workspace_id,
         const std::string client_name);
 
@@ -267,9 +273,9 @@ class Context : public TimelineDatasource {
     error DeleteAutotrackerRule(
         const Poco::Int64 id);
 
-    std::string UserFullName() const;
+    std::string UserFullName();
 
-    std::string UserEmail() const;
+    std::string UserEmail();
 
     // Timeline datasource
     error StartAutotrackerEvent(const TimelineEvent event);
@@ -277,6 +283,10 @@ class Context : public TimelineDatasource {
     error StartTimelineEvent(TimelineEvent *event);
     error MarkTimelineBatchAsUploaded(
         const std::vector<TimelineEvent> &events);
+
+    error SetPromotionResponse(
+        const int64_t promotion_type,
+        const int64_t promotion_response);
 
  protected:
     void uiUpdaterActivity();
@@ -330,9 +340,11 @@ class Context : public TimelineDatasource {
 
     Database *db() const;
 
-    std::vector<TimeEntry *> timeEntries(const bool including_running) const;
+    void timelineEvents(
+        std::vector<TimedEvent *> *result);
 
-    TogglTimeEntryView *timeEntryViewItem(TimeEntry *te);
+    void timeEntries(
+        std::vector<TimedEvent *> *result);
 
     void displayTimerState();
     void displayTimeEntryEditor(const bool open,
@@ -348,13 +360,11 @@ class Context : public TimelineDatasource {
 
     void displayReminder();
 
-    Poco::Int64 totalDurationForDate(TimeEntry *te) const;
+    Poco::Int64 totalDurationForDate(const TimeEntry *te);
 
     void updateUI(std::vector<ModelChange> *changes);
 
     error displayError(const error err);
-
-    bool canSeeBillable(Workspace *workspace) const;
 
     void scheduleSync();
 
@@ -376,11 +386,36 @@ class Context : public TimelineDatasource {
 
     error downloadUpdate();
 
-    AutotrackerRule *findAutotrackerRule(const TimelineEvent event) const;
+    AutotrackerRule *findAutotrackerRule(const TimelineEvent event);
 
     void stopActivities();
 
     error offerBetaChannel();
+
+    error compressTimeline();
+
+    error pullAllUserData(TogglClient *https_client);
+    error pullChanges(TogglClient *https_client);
+    error pushChanges(
+        TogglClient *https_client,
+        bool *had_something_to_push);
+    static error signup(
+        TogglClient *https_client,
+        const std::string email,
+        const std::string password,
+        std::string *user_data_json);
+    static error me(
+        TogglClient *https_client,
+        const std::string email,
+        const std::string password,
+        std::string *user_data,
+        const Poco::UInt64 since);
+
+    template<typename T>
+    void collectPushableModels(
+        const std::vector<T *> list,
+        std::vector<T *> *result,
+        std::map<std::string, BaseModel *> *models = nullptr) const;
 
     Poco::Mutex db_m_;
     Database *db_;
@@ -437,11 +472,10 @@ class Context : public TimelineDatasource {
 
     std::string update_path_;
 
-    bool im_a_teapot_;
-
     static std::string log_path_;
 
     Settings settings_;
+    Settings tracked_settings_;
 
     std::set<std::string> autotracker_titles_;
 };

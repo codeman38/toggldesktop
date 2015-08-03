@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "./base_model.h"
-#include "./const.h"
 #include "./types.h"
 
 #include "Poco/Types.h"
@@ -63,23 +62,17 @@ class Project : public BaseModel {
     }
     void SetPrivate(const bool value);
 
-    std::string String() const;
-
     const bool &Billable() const {
         return billable_;
     }
     void SetBillable(const bool value);
 
-    std::string ModelName() const {
-        return kModelProject;
-    }
-    std::string ModelURL() const {
-        return "/api/v8/projects";
-    }
-
+    // Override BaseModel
+    std::string String() const;
+    std::string ModelName() const;
+    std::string ModelURL() const;
     void LoadFromJSON(Json::Value value);
     Json::Value SaveToJSON() const;
-
     bool DuplicateResource(const toggl::error) const;
     bool ResourceCannotBeCreated(const toggl::error) const;
     bool ResolveError(const toggl::error);

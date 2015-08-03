@@ -52,10 +52,10 @@ void WindowChangeRecorder::inspectFocusedWindow() {
             last_autotracker_title_ = title;
 
             TimelineEvent event;
-            event.start_time = last_event_started_at_;
-            event.end_time = now;
-            event.title = title;
-            event.idle = false;
+            event.SetStart(last_event_started_at_);
+            event.SetEndTime(now);
+            event.SetTitle(title);
+            event.SetIdle(false);
             timeline_datasource_->StartAutotrackerEvent(event);
         }
     }
@@ -73,14 +73,13 @@ void WindowChangeRecorder::inspectFocusedWindow() {
     if (last_event_started_at_ > 0) {
         // if window was focussed at least X seconds, save it to timeline
         if (time_delta >= kWindowFocusThresholdSeconds && !last_idle_) {
-            TimelineEvent event;
-            event.start_time = last_event_started_at_;
-            event.end_time = now;
-            event.filename = last_filename_;
-            event.title = last_title_;
-            event.idle = false;
-
-            error err = timeline_datasource_->StartTimelineEvent(&event);
+            TimelineEvent *event = new TimelineEvent();
+            event->SetStart(last_event_started_at_);
+            event->SetEndTime(now);
+            event->SetFilename(last_filename_);
+            event->SetTitle(last_title_);
+            event->SetIdle(false);
+            error err = timeline_datasource_->StartTimelineEvent(event);
             if (err != noError) {
                 logger().error(err);
             }
@@ -93,29 +92,42 @@ void WindowChangeRecorder::inspectFocusedWindow() {
     last_event_started_at_ = now;
 }
 
+#define kWindowRecorderSleepMillis 250
+
 void WindowChangeRecorder::recordLoop() {
     while (!recording_.isStopped()) {
+        {
+            Poco::Mutex::ScopedLock lock(shutdown_m_);
+            if (shutdown_) {
+                break;
+            }
+        }
+
         inspectFocusedWindow();
 
         if (recording_.isStopped()) {
             break;
         }
 
-        Poco::Thread::sleep(250);
+        Poco::Thread::sleep(kWindowRecorderSleepMillis);
 
         if (recording_.isStopped()) {
             break;
         }
 
-        Poco::Thread::sleep(250);
+        Poco::Thread::sleep(kWindowRecorderSleepMillis);
     }
 }
 
 error WindowChangeRecorder::Shutdown() {
     try {
+        {
+            Poco::Mutex::ScopedLock lock(shutdown_m_);
+            shutdown_ = true;
+        }
         if (recording_.isRunning()) {
             recording_.stop();
-            recording_.wait();
+            recording_.wait(5);
         }
     } catch(const Poco::Exception& exc) {
         return exc.displayText();

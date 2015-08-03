@@ -53,6 +53,9 @@
 // We'll be updating running TE as a menu item, too
 @property (strong) IBOutlet NSMenuItem *runningTimeEntryMenuItem;
 
+// We'll add user email once userdata has been loaded
+@property (strong) IBOutlet NSMenuItem *currentUserEmailMenuItem;
+
 // Where logs are written and db is kept
 @property NSString *app_path;
 @property NSString *db_path;
@@ -164,6 +167,10 @@ BOOL manualMode = NO;
 												 name:kCommandNew
 											   object:nil];
 	[[NSNotificationCenter defaultCenter] addObserver:self
+											 selector:@selector(startNewShortcut:)
+												 name:kCommandNewShortcut
+											   object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self
 											 selector:@selector(startContinueTimeEntry:)
 												 name:kCommandContinue
 											   object:nil];
@@ -194,6 +201,10 @@ BOOL manualMode = NO;
 	[[NSNotificationCenter defaultCenter] addObserver:self
 											 selector:@selector(startDisplaySettings:)
 												 name:kDisplaySettings
+											   object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self
+											 selector:@selector(startDisplayPromotion:)
+												 name:kDisplayPromotion
 											   object:nil];
 
 	toggl_set_environment(ctx, [self.environment UTF8String]);
@@ -287,15 +298,18 @@ BOOL manualMode = NO;
 {
 	NSLog(@"didActivateNotification %@", notification);
 
+	// ignore close button
+	if (NSUserNotificationActivationTypeActionButtonClicked != notification.activationType)
+	{
+		return;
+	}
+
 	// handle autotracker notification
 	if (notification && notification.userInfo && notification.userInfo[@"autotracker"] != nil)
 	{
-		if (NSUserNotificationActivationTypeActionButtonClicked == notification.activationType)
-		{
-			NSNumber *project_id = notification.userInfo[@"project_id"];
-			char_t *guid = toggl_start(ctx, "", "", 0, project_id.longValue, 0);
-			free(guid);
-		}
+		NSNumber *project_id = notification.userInfo[@"project_id"];
+		char_t *guid = toggl_start(ctx, "", "", 0, project_id.longValue, 0, "");
+		free(guid);
 		return;
 	}
 
@@ -333,12 +347,38 @@ BOOL manualMode = NO;
 	NSAssert([NSThread isMainThread], @"Rendering stuff should happen on main thread");
 	NSAssert(new_time_entry != nil, @"new time entry details cannot be nil");
 
+	const char *tag_list = [[new_time_entry.tags componentsJoinedByString:@"\t"] UTF8String];
+
 	char *guid = toggl_start(ctx,
 							 [new_time_entry.Description UTF8String],
 							 [new_time_entry.duration UTF8String],
 							 new_time_entry.TaskID,
 							 new_time_entry.ProjectID,
+							 0,
+							 tag_list);
+	free(guid);
+}
+
+- (void)startNewShortcut:(NSNotification *)notification
+{
+	[self performSelectorOnMainThread:@selector(newShortcut:)
+						   withObject:notification.object
+						waitUntilDone:NO];
+}
+
+- (void)newShortcut:(TimeEntryViewItem *)new_time_entry
+{
+	NSAssert([NSThread isMainThread], @"Rendering stuff should happen on main thread");
+	NSAssert(new_time_entry != nil, @"new time entry details cannot be nil");
+
+	char *guid = toggl_start(ctx,
+							 [new_time_entry.Description UTF8String],
+							 [new_time_entry.duration UTF8String],
+							 new_time_entry.TaskID,
+							 new_time_entry.ProjectID,
+							 0,
 							 0);
+	toggl_edit(ctx, guid, true, "");
 	free(guid);
 }
 
@@ -504,6 +544,28 @@ BOOL manualMode = NO;
 	}
 }
 
+- (void)startDisplayPromotion:(NSNotification *)notification
+{
+	[self performSelectorOnMainThread:@selector(displayPromotion:)
+						   withObject:notification.object
+						waitUntilDone:NO];
+}
+
+- (void)displayPromotion:(NSNumber *)promotion_type
+{
+	NSAssert([NSThread isMainThread], @"Rendering stuff should happen on main thread");
+
+	NSAlert *alert = [[NSAlert alloc] init];
+	[alert addButtonWithTitle:@"Let's do it!"];
+	[alert addButtonWithTitle:@"No thanks"];
+	[alert setMessageText:@"Join Team Beta?"];
+	[alert setInformativeText:@"Hi there! Would you like to join Toggl Desktop Beta program to get cool gear and check out the hot new features as they come out of the oven?"];
+	[alert setAlertStyle:NSInformationalAlertStyle];
+	NSInteger result = [alert runModal];
+
+	toggl_set_promotion_response(ctx, promotion_type.intValue, NSAlertFirstButtonReturn == result);
+}
+
 - (void)startDisplayLogin:(NSNotification *)notification
 {
 	[self performSelectorOnMainThread:@selector(displayLogin:)
@@ -522,6 +584,11 @@ BOOL manualMode = NO;
 		// maybe its running, but we dont know any more
 		[self indicateStoppedTimer];
 	}
+	// Set email address
+	char *str = toggl_get_user_email(ctx);
+	NSString *email = [NSString stringWithUTF8String:str];
+	free(str);
+	[self.currentUserEmailMenuItem setTitle:email];
 }
 
 - (void)startDisplayOnlineState:(NSNotification *)notification
@@ -707,8 +774,10 @@ BOOL manualMode = NO;
 - (void)createStatusItem
 {
 	NSAssert([NSThread isMainThread], @"Rendering stuff should happen on main thread");
-
 	NSMenu *menu = [[NSMenu alloc] init];
+	self.currentUserEmailMenuItem = [menu addItemWithTitle:@""
+													action:nil
+											 keyEquivalent:@""];
 	self.runningTimeEntryMenuItem = [menu addItemWithTitle:@"Timer status"
 													action:nil
 											 keyEquivalent:@""];
@@ -791,7 +860,7 @@ BOOL manualMode = NO;
 
 - (void)onNewMenuItem:(id)sender
 {
-	[[NSNotificationCenter defaultCenter] postNotificationName:kCommandNew
+	[[NSNotificationCenter defaultCenter] postNotificationName:kCommandNewShortcut
 														object:[[TimeEntryViewItem alloc] init]];
 }
 
@@ -1261,10 +1330,19 @@ void on_reminder(const char *title, const char *informative_text)
 {
 	NSUserNotification *notification = [[NSUserNotification alloc] init];
 
+	// http://stackoverflow.com/questions/11676017/nsusernotification-not-showing-action-button
+	[notification setValue:@YES forKey:@"_showsButtons"];
+
 	[notification setTitle:[NSString stringWithUTF8String:title]];
 	[notification setInformativeText:[NSString stringWithUTF8String:informative_text]];
 	[notification setDeliveryDate:[NSDate dateWithTimeInterval:0 sinceDate:[NSDate date]]];
-	[notification setSoundName:NSUserNotificationDefaultSoundName];
+
+	notification.userInfo = @{ @"reminder": @"YES" };
+
+	notification.hasActionButton = YES;
+	notification.actionButtonTitle = @"Track";
+	notification.otherButtonTitle = @"Close";
+
 	NSUserNotificationCenter *center = [NSUserNotificationCenter defaultUserNotificationCenter];
 	[center scheduleNotification:notification];
 }
@@ -1348,9 +1426,12 @@ void on_autotracker_notification(const char_t *project_name,
 									[NSString stringWithUTF8String:project_name]];
 	notification.hasActionButton = YES;
 	notification.actionButtonTitle = @"Start";
-	notification.userInfo = @{ @"autotracker": @"YES", @"project_id": [NSNumber numberWithLong:project_id] };
+	notification.otherButtonTitle = @"Close";
+	notification.userInfo = @{
+		@"autotracker": @"YES",
+		@"project_id": [NSNumber numberWithLong:project_id]
+	};
 	notification.deliveryDate = [NSDate dateWithTimeInterval:0 sinceDate:[NSDate date]];
-	notification.soundName = NSUserNotificationDefaultSoundName;
 
 	NSUserNotificationCenter *center = [NSUserNotificationCenter defaultUserNotificationCenter];
 	[center scheduleNotification:notification];
