@@ -251,7 +251,6 @@
       <DependentUpon>DescriptionAutoCompleteEntry.xaml</DependentUpon>
     </Compile>
     <Compile Include="WPF\ExtendedTextBox.cs" />
-    <Compile Include="WPF\Extensions.cs" />
     <Compile Include="WPF\LoginConfirmButton.xaml.cs">
       <DependentUpon>LoginConfirmButton.xaml</DependentUpon>
     </Compile>
@@ -280,7 +279,9 @@
     <Compile Include="MainWindowController.Designer.cs">
       <DependentUpon>MainWindowController.cs</DependentUpon>
     </Compile>
-    <Compile Include="PreferencesWindowController.cs" />
+    <Compile Include="PreferencesWindowController.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="PreferencesWindowController.Designer.cs">
       <DependentUpon>PreferencesWindowController.cs</DependentUpon>
     </Compile>
