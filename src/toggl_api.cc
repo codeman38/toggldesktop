@@ -987,38 +987,43 @@ void toggl_debug(const char_t *text) {
     logger().debug(to_string(text));
 }
 
-bool_t toggl_check_view_struct_size(
+char_t *toggl_check_view_struct_size(
     const int time_entry_view_item_size,
     const int autocomplete_view_item_size,
     const int view_item_size,
     const int settings_size,
     const int autotracker_view_item_size) {
-    int size = sizeof(TogglTimeEntryView);
+	int size = sizeof(TogglTimeEntryView);
     if (time_entry_view_item_size != size) {
-        std::cerr << "Invalid time entry view item struct size" << std::endl;
-        return false;
+		std::stringstream ss;
+		ss << "TogglTimeEntryView expected=" << size << " actual=" << time_entry_view_item_size;
+		return copy_string(ss.str());
     }
     size = sizeof(TogglAutocompleteView);
     if (autocomplete_view_item_size != size) {
-        std::cerr << "Invalid autocomplete view item struct size" << std::endl;
-        return false;
+		std::stringstream ss;
+		ss << "TogglAutocompleteView expected=" << size << " actual=" << autocomplete_view_item_size;
+		return copy_string(ss.str());
     }
     size = sizeof(TogglGenericView);
     if (view_item_size != size) {
-        std::cerr << "Invalid view item struct size" << std::endl;
-        return false;
+		std::stringstream ss;
+		ss << "TogglGenericView expected=" << size << " actual=" << view_item_size;
+		return copy_string(ss.str());
     }
     size = sizeof(TogglSettingsView);
     if (settings_size != size) {
-        std::cerr << "Invalid settings view item struct size" << std::endl;
-        return false;
+		std::stringstream ss;
+		ss << "TogglSettingsView expected=" << size << " actual=" << settings_size;
+		return copy_string(ss.str());
     }
-    size = sizeof(TogglAutocompleteView);
-    if (autocomplete_view_item_size != size) {
-        std::cerr << "Invalid autocomplete view item struct size" << std::endl;
-        return false;
+    size = sizeof(TogglAutotrackerRuleView);
+	if (autotracker_view_item_size != size) {
+		std::stringstream ss;
+		ss << "TogglAutotrackerRuleView expected=" << size << " actual=" << autotracker_view_item_size;
+		return copy_string(ss.str());
     }
-    return true;
+    return nullptr;
 }
 
 void toggl_set_idle_seconds(
