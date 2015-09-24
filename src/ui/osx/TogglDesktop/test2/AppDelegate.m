@@ -838,10 +838,9 @@ BOOL manualMode = NO;
 	[menu addItemWithTitle:@"About"
 					action:@selector(onAboutMenuItem:)
 			 keyEquivalent:@""];
-	NSMenuItem *sendFeedbackMenuItem = [menu addItemWithTitle:@"Send Feedback"
-													   action:@selector(onSendFeedbackMenuItem)
-												keyEquivalent:@""];
-	sendFeedbackMenuItem.tag = kMenuItemTagSendFeedback;
+	[menu addItemWithTitle:@"Send Feedback"
+					action:@selector(onSendFeedbackMenuItem)
+			 keyEquivalent:@""];
 	[menu addItemWithTitle:@"Logout"
 					action:@selector(onLogoutMenuItem:)
 			 keyEquivalent:@""].tag = kMenuItemTagLogout;;
@@ -959,6 +958,11 @@ BOOL manualMode = NO;
 	[self.aboutWindowController showWindow:self];
 	[self.aboutWindowController checkForUpdates];
 	[NSApp activateIgnoringOtherApps:YES];
+}
+
+- (IBAction)onViewChangelogMenuItem:(id)sender
+{
+	[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://toggl.github.io/toggldesktop"]];
 }
 
 - (IBAction)onShowMenuItem:(id)sender
@@ -1195,7 +1199,6 @@ const NSString *appName = @"osx_native_app";
 		case kMenuItemTagSync :
 		case kMenuItemTagLogout :
 		case kMenuItemTagClearCache :
-		case kMenuItemTagSendFeedback :
 		case kMenuItemTagOpenBrowser :
 		case kMenuItemTagNew :
 			if (!self.lastKnownUserID)
